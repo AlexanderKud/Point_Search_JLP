@@ -202,15 +202,11 @@ int main() {
                 uint64_t steps = 0;
                 for (auto i : privkey_num) { steps += i; }
                 Int_steps.SetInt64(steps);
-                print_time(); cout << "Steps: " << Int_steps.GetBase10() << endl;
-                print_time(); cout << "Stride_sum: " << stride_sum.GetBase10() << endl;
-                print_time(); cout << "Pre_calc_sum: " << pre_calc_sum.GetBase10() << endl;
                 Int_temp.Sub(&stride_sum, &Int_steps);
                 privkey.Sub(&pre_calc_sum, &Int_temp);
                 privkey.Mult(mult);
                 privkey.AddOne();
                 calc_point = secp256k1->ComputePublicKey(&privkey);
-                print_time(); cout << "Calculated: " << privkey.GetBase10() << endl;
                 if (secp256k1->GetPublicKeyHex(true, calc_point) == search_pub) {
                     print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
                     ofstream outFile;
