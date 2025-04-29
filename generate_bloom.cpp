@@ -75,7 +75,7 @@ void print_time() {
     cout << "[" << output << "] ";
 }
 
-int main() {
+auto main() -> int {
     
     auto start = std::chrono::high_resolution_clock::now();
     Secp256K1* secp256k1 = new Secp256K1(); secp256k1->Init();

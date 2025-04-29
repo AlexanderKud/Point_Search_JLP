@@ -65,7 +65,7 @@ vector<uint64_t> break_down_to_pow10(uint64_t num) {
     return nums;
 }
 
-int main() {
+auto main() -> int {
 
     Secp256K1* secp256k1 = new Secp256K1(); secp256k1->Init();
     
