@@ -156,7 +156,7 @@ auto main() -> int {
     
     auto bloom_create1 = [&]() {
         string bloomfile = "bloom1.bf";
-        size_t n_elements =  size_t(pow(2, block_width) * 1.5);
+        uint64_t n_elements = uint64_t(pow(2, block_width) * 1.5);
         double error = 0.000000001;
         Point P; P = puzzle_point;
         BloomFilter bf(n_elements, error);
@@ -172,7 +172,7 @@ auto main() -> int {
     
     auto bloom_create2 = [&]() {
         string bloomfile = "bloom2.bf";
-        size_t n_elements =  size_t(pow(2, block_width) * 1.5);
+        uint64_t n_elements = uint64_t(pow(2, block_width) * 1.5);
         double error = 0.000000001;
         Point P; P = puzzle_point_05;
         BloomFilter bf(n_elements, error);
