@@ -1,26 +1,27 @@
-<pre>[alexander@alexander-home Point_Search_CPP]$ ./generate_bloom
-[00:16:21] P_table generated
-[00:16:21] Range Start: 50 bits
-[00:16:21] Range End  : 51 bits 
-[00:16:21] Block Width: 2^25
-[00:16:21] Search Pub : 037fcccd965224a7d299ec4f14c1506b35b3583d3fdae17a69f9b6fec3dd2089a2
-[00:16:21] Settings written to file
-[00:16:21] Creating BloomFile1
-[00:16:21] Creating BloomFile2
-[00:25:31] Writing BloomFile1 to bloom1.bf
-[00:25:33] Writing BloomFile2 to bloom2.bf
-[00:25:34] Elapsed time: 552.742s
+<pre>
+[alexander@alexander-home Point_Search_CPP2]$ ./generate_bloom
+[23:27:40] P_table generated
+[23:27:40] Range Start: 51 bits
+[23:27:40] Range End  : 52 bits
+[23:27:40] Block Width: 2^25
+[23:27:40] Search Pub : 033195139de0331d7a5cab602c4471f728f2e3fb97ed82f593d49ed30ec3c0ba85
+[23:27:40] Settings written to file
+[23:27:40] Creating BloomFile1 Hashes: 30
+[23:27:40] Creating BloomFile2 Hashes: 30
+[23:35:47] Writing BloomFile2 to bloom2.bf
+[23:35:47] Writing BloomFile1 to bloom1.bf
+[23:36:08] Elapsed time: (0)hours (8)minutes (28)seconds
 
-[alexander@alexander-home Point_Search_CPP]$ ./point_search
-[00:25:39] S_table generated
-[00:25:39] Range Start: 50 bits
-[00:25:39] Range End  : 51 bits
-[00:25:39] Block Width: 2^25
-[00:25:39] Search Pub : 037fcccd965224a7d299ec4f14c1506b35b3583d3fdae17a69f9b6fec3dd2089a2
-[00:25:39] Loading Bloomfilter bloom1.bf
-[00:25:39] Loading Bloomfilter bloom2.bf
-[00:25:39] Search in progress...
-[00:26:45] BloomFilter Hit bloom1.bf (Even Point) [Lower Range Half]
-[00:26:45] Privatekey: 1295403161015294
-[00:26:45] Elapsed time: 66.0754s
+[alexander@alexander-home Point_Search_CPP2]$ ./point_search
+[23:36:15] S_table generated
+[23:36:15] Range Start: 51 bits
+[23:36:15] Range End  : 52 bits
+[23:36:15] Block Width: 2^25
+[23:36:15] Search Pub : 033195139de0331d7a5cab602c4471f728f2e3fb97ed82f593d49ed30ec3c0ba85
+[23:36:15] Loading Bloomfilter bloom1.bf
+[23:36:35] Loading Bloomfilter bloom2.bf
+[23:36:54] Search in progress...
+[23:37:32] BloomFilter Hit bloom2.bf (Odd Point) [Lower Range Half]
+[23:37:32] Privatekey: 3052923631068611
+[23:37:32] Elapsed time: (0)hours (0)minutes (37)seconds
 </pre>

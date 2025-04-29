@@ -9,7 +9,7 @@
 
 #include "secp256k1/SECP256k1.h"
 #include "secp256k1/Int.h"
-#include "bloom/bloom.h"
+#include "bloom2/bloomFilter.h"
 
 using namespace std;
 
@@ -97,16 +97,14 @@ auto main() -> int {
     second_scalar.Set(&S_table[range_start - 2]);
     pre_calc_sum.Add(&first_scalar, &second_scalar);
     
-    const char *bloomfile1 = "bloom1.bf";
-    const char *bloomfile2 = "bloom2.bf";
+    string bloomfile1 = "bloom1.bf";
+    string bloomfile2 = "bloom2.bf";
     
     print_time(); cout << "Loading Bloomfilter bloom1.bf" << endl;
-    BloomFilter bf1;
-    bloom_filter_import(&bf1, bloomfile1);
+    BloomFilter bf1(bloomfile1);
     
     print_time(); cout << "Loading Bloomfilter bloom2.bf" << endl;
-    BloomFilter bf2;
-    bloom_filter_import(&bf2, bloomfile2);
+    BloomFilter bf2(bloomfile2);
     
     auto pow10_nums = break_down_to_pow10(uint64_t(pow(2, block_width)));
     vector<Point> pow10_points;
@@ -136,7 +134,7 @@ auto main() -> int {
         
         while (true) {
             cpub = secp256k1->GetPublicKeyHex(true, starting_point);
-            if (bloom_filter_check_string(&bf1, cpub.data()) == BLOOM_SUCCESS) {
+            if (bf1.contains(cpub)) {
                 print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
                 Point P(starting_point);
                 vector<uint64_t> privkey_num;
@@ -145,7 +143,7 @@ auto main() -> int {
                 for (auto p : pow10_points) {
                     int count = 0;
                     cpub1 = secp256k1->GetPublicKeyHex(true, P);
-                    while (bloom_filter_check_string(&bf1, cpub1.data()) == BLOOM_SUCCESS) {
+                    while (bf1.contains(cpub1)) {
                         P = secp256k1->Subtract(P, p);
                         cpub1 = secp256k1->GetPublicKeyHex(true, P);
                         count += 1;
@@ -182,18 +180,18 @@ auto main() -> int {
                 print_time(); cout << "False Positive" << endl;
             }
             
-            if (bloom_filter_check_string(&bf2, cpub.data()) == BLOOM_SUCCESS) {
+            if (bf2.contains(cpub)) {
                 print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Lower Range Half]" << endl;
                 Point P(starting_point);
                 vector<uint64_t> privkey_num;
                 int index = 0;
-                string cpub1;
+                string cpub2;
                 for (auto p : pow10_points) {
                     int count = 0;
-                    cpub1 = secp256k1->GetPublicKeyHex(true, P);
-                    while (bloom_filter_check_string(&bf2, cpub1.data()) == BLOOM_SUCCESS) {
+                    cpub2 = secp256k1->GetPublicKeyHex(true, P);
+                    while (bf2.contains(cpub2)) {
                         P = secp256k1->Subtract(P, p);
-                        cpub1 = secp256k1->GetPublicKeyHex(true, P);
+                        cpub2 = secp256k1->GetPublicKeyHex(true, P);
                         count += 1;
                     }
                     privkey_num.push_back(pow10_nums[index] * (count - 1));
@@ -263,7 +261,7 @@ auto main() -> int {
         
         while (true) {
             cpub = secp256k1->GetPublicKeyHex(true, starting_point);
-            if (bloom_filter_check_string(&bf1, cpub.data()) == BLOOM_SUCCESS) {
+            if (bf1.contains(cpub)) {
                 print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Higher Range Half]" << endl;
                 Point P(starting_point);
                 vector<uint64_t> privkey_num;
@@ -272,7 +270,7 @@ auto main() -> int {
                 for (auto p : pow10_points) {
                     int count = 0;
                     cpub1 = secp256k1->GetPublicKeyHex(true, P);
-                    while (bloom_filter_check_string(&bf1, cpub1.data()) == BLOOM_SUCCESS) {
+                    while (bf1.contains(cpub1)) {
                         P = secp256k1->Subtract(P, p);
                         cpub1 = secp256k1->GetPublicKeyHex(true, P);
                         count += 1;
@@ -309,18 +307,18 @@ auto main() -> int {
                 print_time(); cout << "False Positive" << endl;
             }
             
-            if (bloom_filter_check_string(&bf2, cpub.data()) == BLOOM_SUCCESS) {
+            if (bf2.contains(cpub)) {
                 print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Higher Range Half]" << endl;
                 Point P(starting_point);
                 vector<uint64_t> privkey_num;
                 int index = 0;
-                string cpub1;
+                string cpub2;
                 for (auto p : pow10_points) {
                     int count = 0;
-                    cpub1 = secp256k1->GetPublicKeyHex(true, P);
-                    while (bloom_filter_check_string(&bf2, cpub1.data()) == BLOOM_SUCCESS) {
+                    cpub2 = secp256k1->GetPublicKeyHex(true, P);
+                    while (bf2.contains(cpub2)) {
                         P = secp256k1->Subtract(P, p);
-                        cpub1 = secp256k1->GetPublicKeyHex(true, P);
+                        cpub2 = secp256k1->GetPublicKeyHex(true, P);
                         count += 1;
                     }
                     privkey_num.push_back(pow10_nums[index] * (count - 1));

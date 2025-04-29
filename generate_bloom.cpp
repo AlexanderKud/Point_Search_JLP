@@ -10,7 +10,8 @@
 
 #include "secp256k1/SECP256k1.h"
 #include "secp256k1/Int.h"
-#include "bloom/bloom.h"
+#include "bloom2/bloomFilter.h"
+
 
 using namespace std;
 namespace fs = filesystem;
@@ -154,37 +155,35 @@ auto main() -> int {
     print_time(); cout << "Settings written to file" << endl;
     
     auto bloom_create1 = [&]() {
-        const char *bloomfile = "bloom1.bf";
-        uint64_t n_elements =  uint64_t(pow(2, block_width) * 1.7);
+        string bloomfile = "bloom1.bf";
+        size_t n_elements =  size_t(pow(2, block_width) * 1.5);
+        double error = 0.000000001;
         Point P; P = puzzle_point;
-        BloomFilter bf;
-        bloom_filter_init(&bf, n_elements, 0.00000001);
+        BloomFilter bf(n_elements, error);
         print_time(); cout << "Creating BloomFile1" << '\n';
         for (int i = 0; i < int(n_elements); i++) {
-            bloom_filter_add_string(&bf, secp256k1->GetPublicKeyHex(true, P).data());
+            bf.add(secp256k1->GetPublicKeyHex(true, P));
             P = secp256k1->Add2(P, secp256k1->G);
             P.Reduce();
         }
         print_time(); cout << "Writing BloomFile1 to bloom1.bf" << '\n';
-        bloom_filter_export(&bf, bloomfile);
-        bloom_filter_destroy(&bf);
+        bf.save_to_file("bloom1.bf");
     };
     
     auto bloom_create2 = [&]() {
-        const char *bloomfile = "bloom2.bf";
-        uint64_t n_elements =  uint64_t(pow(2, block_width) * 1.7);
+        string bloomfile = "bloom2.bf";
+        size_t n_elements =  size_t(pow(2, block_width) * 1.5);
+        double error = 0.000000001;
         Point P; P = puzzle_point_05;
-        BloomFilter bf;
-        bloom_filter_init(&bf, n_elements, 0.00000001);
+        BloomFilter bf(n_elements, error);
         print_time(); cout << "Creating BloomFile2" << '\n';
         for (int i = 0; i < int(n_elements); i++) {
-            bloom_filter_add_string(&bf, secp256k1->GetPublicKeyHex(true, P).data());
+            bf.add(secp256k1->GetPublicKeyHex(true, P));
             P = secp256k1->Add2(P, secp256k1->G);
             P.Reduce();
         }
         print_time(); cout << "Writing BloomFile2 to bloom2.bf" << '\n'; 
-        bloom_filter_export(&bf, bloomfile);
-        bloom_filter_destroy(&bf);
+        bf.save_to_file("bloom2.bf");
     };
 
     std::thread thread1(bloom_create1);
