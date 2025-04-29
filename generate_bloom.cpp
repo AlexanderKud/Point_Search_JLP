@@ -77,7 +77,7 @@ void print_time() {
 
 int main() {
     
-    auto start = chrono::system_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
     Secp256K1* secp256k1 = new Secp256K1(); secp256k1->Init();
     
     fs::path current_path = fs::current_path();
@@ -193,7 +193,12 @@ int main() {
     thread1.join();
     thread2.join();
 
-    auto end = chrono::system_clock::now();
-    chrono::duration<double> elapsed_seconds = end-start;
-    print_time(); cout << "Elapsed time: " << elapsed_seconds.count() << "s" << endl;
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = end - start;
+    auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
+    duration -= hours;
+    auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
+    duration -= minutes;
+    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+    print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
 }

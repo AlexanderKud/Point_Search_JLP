@@ -116,7 +116,7 @@ int main() {
         pow10_points.push_back(secp256k1->ComputePublicKey(&pow_key));
     }
     
-    auto start = chrono::system_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
     
     auto addition_search = [&]() {
         uint64_t mult = 2;
@@ -136,7 +136,6 @@ int main() {
         
         while (true) {
             cpub = secp256k1->GetPublicKeyHex(true, starting_point);
-            
             if (bloom_filter_check_string(&bf1, cpub.data()) == BLOOM_SUCCESS) {
                 print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
                 Point P(starting_point);
@@ -170,9 +169,14 @@ int main() {
                     outFile.open("found.txt", ios::app);
                     outFile << privkey.GetBase10() << '\n';
                     outFile.close();
-                    auto end = chrono::system_clock::now();
-                    chrono::duration<double> elapsed_seconds = end-start;
-                    print_time(); cout << "Elapsed time: " << elapsed_seconds.count() << "s" << endl;
+                    auto end = std::chrono::high_resolution_clock::now();
+                    auto duration = end - start;
+                    auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
+                    duration -= hours;
+                    auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
+                    duration -= minutes;
+                    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+                    print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
                     exit(0);
                 }
                 print_time(); cout << "False Positive" << endl;
@@ -181,7 +185,6 @@ int main() {
             if (bloom_filter_check_string(&bf2, cpub.data()) == BLOOM_SUCCESS) {
                 print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Lower Range Half]" << endl;
                 Point P(starting_point);
-                print_time(); cout << "P: " << secp256k1->GetPublicKeyHex(true, P) << endl;
                 vector<uint64_t> privkey_num;
                 int index = 0;
                 string cpub1;
@@ -202,24 +205,25 @@ int main() {
                 uint64_t steps = 0;
                 for (auto i : privkey_num) { steps += i; }
                 Int_steps.SetInt64(steps);
-                print_time(); cout << "Steps: " << Int_steps.GetBase10() << endl;
-                print_time(); cout << "Stride_sum: " << stride_sum.GetBase10() << endl;
-                print_time(); cout << "Pre_calc_sum: " << pre_calc_sum.GetBase10() << endl;
                 Int_temp.Sub(&stride_sum, &Int_steps);
                 privkey.Sub(&pre_calc_sum, &Int_temp);
                 privkey.Mult(mult);
                 privkey.AddOne();
                 calc_point = secp256k1->ComputePublicKey(&privkey);
-                print_time(); cout << "Calculated: " << privkey.GetBase10() << endl;
                 if (secp256k1->GetPublicKeyHex(true, calc_point) == search_pub) {
                     print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
                     ofstream outFile;
                     outFile.open("found.txt", ios::app);
                     outFile << privkey.GetBase10() << '\n';
                     outFile.close();
-                    auto end = chrono::system_clock::now();
-                    chrono::duration<double> elapsed_seconds = end-start;
-                    print_time(); cout << "Elapsed time: " << elapsed_seconds.count() << "s" << endl;
+                    auto end = std::chrono::high_resolution_clock::now();
+                    auto duration = end - start;
+                    auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
+                    duration -= hours;
+                    auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
+                    duration -= minutes;
+                    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+                    print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
                     exit(0);
                 }
                 print_time(); cout << "False Positive" << endl; 
@@ -292,13 +296,19 @@ int main() {
                     outFile.open("found.txt", ios::app);
                     outFile << privkey.GetBase10() << '\n';
                     outFile.close();
-                    auto end = chrono::system_clock::now();
-                    chrono::duration<double> elapsed_seconds = end-start;
-                    print_time(); cout << "Elapsed time: " << elapsed_seconds.count() << "s" << endl;
+                    auto end = std::chrono::high_resolution_clock::now();
+                    auto duration = end - start;
+                    auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
+                    duration -= hours;
+                    auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
+                    duration -= minutes;
+                    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+                    print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
                     exit(0);
                 }
                 print_time(); cout << "False Positive" << endl;
             }
+            
             if (bloom_filter_check_string(&bf2, cpub.data()) == BLOOM_SUCCESS) {
                 print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Higher Range Half]" << endl;
                 Point P(starting_point);
@@ -333,9 +343,14 @@ int main() {
                     outFile.open("found.txt", ios::app);
                     outFile << privkey.GetBase10() << '\n';
                     outFile.close();
-                    auto end = chrono::system_clock::now();
-                    chrono::duration<double> elapsed_seconds = end-start;
-                    print_time(); cout << "Elapsed time: " << elapsed_seconds.count() << "s" << endl;
+                    auto end = std::chrono::high_resolution_clock::now();
+                    auto duration = end - start;
+                    auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
+                    duration -= hours;
+                    auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
+                    duration -= minutes;
+                    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+                    print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
                     exit(0);
                 }
                 print_time(); cout << "False Positive" << endl;
