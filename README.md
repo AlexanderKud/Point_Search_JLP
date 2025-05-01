@@ -8,8 +8,8 @@ Requires C++ Boost Library to be installed. <a href="https://www.boost.org">http
 [23:27:40] Block Width: 2^25
 [23:27:40] Search Pub : 033195139de0331d7a5cab602c4471f728f2e3fb97ed82f593d49ed30ec3c0ba85
 [23:27:40] Settings written to file
-[23:27:40] Creating BloomFile1 Hashes: 30
-[23:27:40] Creating BloomFile2 Hashes: 30
+[23:27:40] Creating BloomFile1
+[23:27:40] Creating BloomFile2
 [23:35:47] Writing BloomFile2 to bloom2.bf
 [23:35:47] Writing BloomFile1 to bloom1.bf
 [23:36:08] Elapsed time: (0)hours (8)minutes (28)seconds
