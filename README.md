@@ -1,5 +1,6 @@
 <pre>
 Requires C++ Boost Library to be installed. <a href="https://www.boost.org">https://www.boost.org</a>
+Requires C/C++ GMP Library to be installed. <a href="https://gmplib.org">https://gmplib.org</a>
   
 [alexander@alexander-home Point_Search_CPP2]$ ./generate_bloom
 [23:27:40] P_table generated
