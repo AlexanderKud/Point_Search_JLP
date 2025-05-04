@@ -1,7 +1,6 @@
 #ifndef BIGINTH
 #define BIGINTH
 
-#include "Random.h"
 #include <string>
 #include <inttypes.h>
 #include <gmp.h>
@@ -75,8 +74,6 @@ public:
   bool IsNegative();
   bool IsEven();
   bool IsOdd();
-  bool IsProbablePrime();
-
 
   double ToDouble();
 
@@ -140,8 +137,6 @@ public:
   void SetByte(int n,unsigned char byte);
   void SetDWord(int n, uint32_t b);
   void SetQWord(int n,uint64_t b);
-  void Rand(int nbit);
-  void Rand(Int *randMax);
   void Set32Bytes(unsigned char *bytes);
   void MaskByte(int n);
 

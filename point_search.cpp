@@ -141,7 +141,7 @@ auto main() -> int {
         Int stride_sum, stride;
         ifstream inFile("settings1.txt");
         getline(inFile, temp);
-        starting_point = secp256k1->ParsePublicKeyHex2(trim(temp));
+        starting_point = secp256k1->ParsePublicKeyHex(trim(temp));
         getline(inFile, temp);
         stride_sum.SetBase10(trim(temp).data());
         inFile.close();
@@ -161,13 +161,12 @@ auto main() -> int {
                     int count = 0;
                     cpub1 = secp256k1->GetPublicKeyHex(true, P);
                     while (bf1.may_contain(cpub1)) {
-                        P = secp256k1->Subtract(P, p);
+                        P = secp256k1->SubtractDirect(P, p);
                         cpub1 = secp256k1->GetPublicKeyHex(true, P);
                         count += 1;
                     }
                     privkey_num.push_back(pow10_nums[index] * (count - 1));
-                    P = secp256k1->Add2(P, p);
-                    P.Reduce();
+                    P = secp256k1->AddDirect(P, p);
                     index += 1;
                 }
                 Int Int_steps, Int_temp, privkey;
@@ -207,13 +206,12 @@ auto main() -> int {
                     int count = 0;
                     cpub2 = secp256k1->GetPublicKeyHex(true, P);
                     while (bf2.may_contain(cpub2)) {
-                        P = secp256k1->Subtract(P, p);
+                        P = secp256k1->SubtractDirect(P, p);
                         cpub2 = secp256k1->GetPublicKeyHex(true, P);
                         count += 1;
                     }
                     privkey_num.push_back(pow10_nums[index] * (count - 1));
-                    P = secp256k1->Add2(P, p);
-                    P.Reduce();
+                    P = secp256k1->AddDirect(P, p);
                     index += 1;
                 }
                 Int Int_steps, Int_temp, privkey;
@@ -243,8 +241,7 @@ auto main() -> int {
                 }
                 print_time(); cout << "False Positive" << endl; 
             }
-            starting_point = secp256k1->Add2(starting_point, stride_point);
-            starting_point.Reduce();
+            starting_point = secp256k1->AddDirect(starting_point, stride_point);
             stride_sum.Add(&stride);
             save_counter += 1;
             if (save_counter % 20000000 == 0) {
@@ -269,7 +266,7 @@ auto main() -> int {
         Int stride_sum, stride;
         ifstream inFile("settings2.txt");
         getline(inFile, temp);
-        starting_point = secp256k1->ParsePublicKeyHex2(trim(temp));
+        starting_point = secp256k1->ParsePublicKeyHex(trim(temp));
         getline(inFile, temp);
         stride_sum.SetBase10(trim(temp).data());
         inFile.close();
@@ -289,13 +286,12 @@ auto main() -> int {
                     int count = 0;
                     cpub1 = secp256k1->GetPublicKeyHex(true, P);
                     while (bf1.may_contain(cpub1)) {
-                        P = secp256k1->Subtract(P, p);
+                        P = secp256k1->SubtractDirect(P, p);
                         cpub1 = secp256k1->GetPublicKeyHex(true, P);
                         count += 1;
                     }
                     privkey_num.push_back(pow10_nums[index] * (count - 1));
-                    P = secp256k1->Add2(P, p);
-                    P.Reduce();
+                    P = secp256k1->AddDirect(P, p);
                     index += 1;
                 }
                 Int Int_steps, Int_temp, privkey;
@@ -335,13 +331,12 @@ auto main() -> int {
                     int count = 0;
                     cpub2 = secp256k1->GetPublicKeyHex(true, P);
                     while (bf2.may_contain(cpub2)) {
-                        P = secp256k1->Subtract(P, p);
+                        P = secp256k1->SubtractDirect(P, p);
                         cpub2 = secp256k1->GetPublicKeyHex(true, P);
                         count += 1;
                     }
                     privkey_num.push_back(pow10_nums[index] * (count - 1));
-                    P = secp256k1->Add2(P, p);
-                    P.Reduce();
+                    P = secp256k1->AddDirect(P, p);
                     index += 1;
                 }
                 Int Int_steps, Int_temp, privkey;
@@ -371,7 +366,7 @@ auto main() -> int {
                 }
                 print_time(); cout << "False Positive" << endl;
             }
-            starting_point = secp256k1->Subtract(starting_point, stride_point);
+            starting_point = secp256k1->SubtractDirect(starting_point, stride_point);
             stride_sum.Add(&stride);
             save_counter += 1;
             if (save_counter % 20000000 == 0) {

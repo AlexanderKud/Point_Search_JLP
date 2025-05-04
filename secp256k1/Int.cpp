@@ -769,37 +769,6 @@ void Int::Abs() {
 
 // ------------------------------------------------
 
-void Int::Rand(int nbit) {
-
-	CLEAR();
-
-	uint32_t nb = nbit/32;
-	uint32_t leftBit = nbit%32;
-	uint32_t mask = 1;
-	mask = (mask << leftBit) - 1;
-	uint32_t i=0;
-	for(;i<nb;i++)
-		bits[i]=rndl();
-	bits[i]=rndl()&mask;
-
-}
-
-// ------------------------------------------------
-
-void Int::Rand(Int *randMax) {
-
-  int b = randMax->GetBitLength();
-  Int r;
-  r.Rand(b);
-  Int q(&r);
-  Int rem;
-  q.Div(randMax,&rem);
-  Set(&rem);
-
-}
-
-// ------------------------------------------------
-
 void Int::Div(Int *a, Int *mod) {
 
   if(a->IsGreater(this)) {
@@ -1143,55 +1112,5 @@ std::string Int::GetBase2() {
   ret[k]=0;
 
   return std::string(ret);
-
-}
-
-bool Int::IsProbablePrime() {
-
-  // Prime cheking (probalistic Miller-Rabin test)
-  Int::SetupField(this);
-  int nbBit = GetBitLength();
-
-  Int Q(this);
-  Q.SubOne();
-  Int N1(&Q);
-  uint64_t e = 0;
-  while(Q.IsEven()) {
-    Q.ShiftR(1);
-    e++;
-  }
-
-  uint64_t k = 50;
-
-  for(uint64_t i = 0; i < k; i++) {
-
-    Int a;
-    Int x;
-    x.SetInt32(0);
-    while(x.IsLowerOrEqual(&_ONE) || x.IsGreaterOrEqual(&N1))
-      x.Rand(nbBit);
-    x.ModExp(&Q);
-    if(x.IsOne() || x.IsEqual(&N1))
-      continue;
-
-    for(uint64_t j = 0; j < e - 1; j++) {
-      x.ModSquare(&x);
-      if(x.IsOne()) {
-        // Composite
-        return false;
-      }
-      if(x.IsEqual(&N1))
-        break;
-    }
-
-    if(x.IsEqual(&N1))
-      continue;
-
-    return false;
-
-  }
-
-  // Probable prime
-  return true;
 
 }

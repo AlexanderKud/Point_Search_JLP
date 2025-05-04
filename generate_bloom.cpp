@@ -124,10 +124,9 @@ auto main() -> int {
     d_05.SetBase10("57896044618658097711785492504343953926418782139537452191302581570759080747169");
     div2.SetBase10("2");
     point_05 = secp256k1->ComputePublicKey(&d_05);
-    puzzle_point = secp256k1->ParsePublicKeyHex2(search_pub);
-    puzzle_point_05 = secp256k1->Add2(puzzle_point, point_05);
-    puzzle_point_05.Reduce();
-    
+    puzzle_point = secp256k1->ParsePublicKeyHex(search_pub);
+    puzzle_point_05 = secp256k1->AddDirect(puzzle_point, point_05);
+
     puzzle_point_divide2 = secp256k1->PointDivision2(puzzle_point, &div2);
 
     first_point  = P_table[range_start - 1];
@@ -135,10 +134,8 @@ auto main() -> int {
 
     P1 = secp256k1->Subtract(puzzle_point_divide2, first_point);
     P2 = secp256k1->Subtract(puzzle_point_divide2, second_point);
-    Q1 = secp256k1->Add2(P1, P2);
-    Q1.Reduce();
-    Q2 = secp256k1->Add2(puzzle_point_divide2, Q1);
-    Q2.Reduce();
+    Q1 = secp256k1->AddDirect(P1, P2);
+    Q2 = secp256k1->AddDirect(puzzle_point_divide2, Q1);
     
     ofstream outFile1;
     outFile1.open("settings1.txt", ios::app);
@@ -166,8 +163,7 @@ auto main() -> int {
         string cpub;
         for (int i = 0; i < int(n_elements); i++) {
              bf.insert(secp256k1->GetPublicKeyHex(true, P));
-            P = secp256k1->Add2(P, secp256k1->G);
-            P.Reduce();
+            P = secp256k1->AddDirect(P, secp256k1->G);
         }
         print_time(); cout << "Writing BloomFile1 to bloom1.bf" << '\n';
         std::ofstream out(bloomfile, std::ios::binary);
@@ -187,8 +183,7 @@ auto main() -> int {
         print_time(); cout << "Creating BloomFile2" << '\n';
         for (int i = 0; i < int(n_elements); i++) {
             bf.insert(secp256k1->GetPublicKeyHex(true, P));
-            P = secp256k1->Add2(P, secp256k1->G);
-            P.Reduce();
+            P = secp256k1->AddDirect(P, secp256k1->G);
         }
         print_time(); cout << "Writing BloomFile2 to bloom2.bf" << '\n'; 
         std::ofstream out(bloomfile, std::ios::binary);
