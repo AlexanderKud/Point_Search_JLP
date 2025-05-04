@@ -157,7 +157,7 @@ auto main() -> int {
         string bloomfile = "bloom1.bf";
         uint64_t n_elements = uint64_t(pow(2, block_width) * 1.5);
         double error = 0.00000001;
-        Point P; P = puzzle_point;
+        Point P(puzzle_point);
         filter bf(n_elements, error);
         print_time(); cout << "Creating BloomFile1" << '\n';
         string cpub;
@@ -178,7 +178,7 @@ auto main() -> int {
         string bloomfile = "bloom2.bf";
         uint64_t n_elements = uint64_t(pow(2, block_width) * 1.5);
         double error = 0.00000001;
-        Point P; P = puzzle_point_05;
+        Point P(puzzle_point_05);
         filter bf(n_elements, error);
         print_time(); cout << "Creating BloomFile2" << '\n';
         for (int i = 0; i < int(n_elements); i++) {
