@@ -18,17 +18,11 @@ namespace fs = filesystem;
 
 vector<string> get_files_in_directory(const string& directory_path) {
     vector<string> files;
-    
-    try {
-        for (const auto& entry : fs::directory_iterator(directory_path)) {
-            if (entry.is_regular_file()) {
-                files.push_back(entry.path().filename().string());
-            }
+    for (const auto& entry : fs::directory_iterator(directory_path)) {
+        if (entry.is_regular_file()) {
+            files.push_back(entry.path().filename().string());
         }
-    } catch (const fs::filesystem_error& e) {
-        cerr << "Error accessing directory: " << e.what() << std::endl;
-    }
-    
+    }  
     return files;
 }
 
