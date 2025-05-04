@@ -34,7 +34,7 @@ public:
   Point NextKey(Point &key);
   bool  EC(Point &p);
 
-  std::string GetPublicKeyHex(bool compressed, Point &p);
+  std::string GetPublicKeyHex(Point &p);
   Point ParsePublicKeyHex(std::string pub);
 
   

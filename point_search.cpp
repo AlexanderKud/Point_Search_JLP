@@ -150,7 +150,7 @@ auto main() -> int {
         stride_point = secp256k1->ComputePublicKey(&stride);
         
         while (true) {
-            cpub = secp256k1->GetPublicKeyHex(true, starting_point);
+            cpub = secp256k1->GetPublicKeyHex(starting_point);
             if (bf1.may_contain(cpub)) {
                 print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
                 Point P(starting_point);
@@ -159,10 +159,10 @@ auto main() -> int {
                 string cpub1;
                 for (auto p : pow10_points) {
                     int count = 0;
-                    cpub1 = secp256k1->GetPublicKeyHex(true, P);
+                    cpub1 = secp256k1->GetPublicKeyHex(P);
                     while (bf1.may_contain(cpub1)) {
                         P = secp256k1->SubtractDirect(P, p);
-                        cpub1 = secp256k1->GetPublicKeyHex(true, P);
+                        cpub1 = secp256k1->GetPublicKeyHex(P);
                         count += 1;
                     }
                     privkey_num.push_back(pow10_nums[index] * (count - 1));
@@ -177,7 +177,7 @@ auto main() -> int {
                 privkey.Sub(&pre_calc_sum, &Int_temp);
                 privkey.Mult(mult);
                 calc_point = secp256k1->ComputePublicKey(&privkey);
-                if (secp256k1->GetPublicKeyHex(true, calc_point) == search_pub) {
+                if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) {
                     print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
                     ofstream outFile;
                     outFile.open("found.txt", ios::app);
@@ -204,10 +204,10 @@ auto main() -> int {
                 string cpub2;
                 for (auto p : pow10_points) {
                     int count = 0;
-                    cpub2 = secp256k1->GetPublicKeyHex(true, P);
+                    cpub2 = secp256k1->GetPublicKeyHex(P);
                     while (bf2.may_contain(cpub2)) {
                         P = secp256k1->SubtractDirect(P, p);
-                        cpub2 = secp256k1->GetPublicKeyHex(true, P);
+                        cpub2 = secp256k1->GetPublicKeyHex(P);
                         count += 1;
                     }
                     privkey_num.push_back(pow10_nums[index] * (count - 1));
@@ -223,7 +223,7 @@ auto main() -> int {
                 privkey.Mult(mult);
                 privkey.AddOne();
                 calc_point = secp256k1->ComputePublicKey(&privkey);
-                if (secp256k1->GetPublicKeyHex(true, calc_point) == search_pub) {
+                if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) {
                     print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
                     ofstream outFile;
                     outFile.open("found.txt", ios::app);
@@ -245,7 +245,7 @@ auto main() -> int {
             stride_sum.Add(&stride);
             save_counter += 1;
             if (save_counter % 20000000 == 0) {
-                cpub = secp256k1->GetPublicKeyHex(true, starting_point);
+                cpub = secp256k1->GetPublicKeyHex(starting_point);
                 ofstream outFile;
                 outFile.open("settings1.txt");
                 outFile << cpub <<'\n';
@@ -275,7 +275,7 @@ auto main() -> int {
         stride_point = secp256k1->ComputePublicKey(&stride);
         
         while (true) {
-            cpub = secp256k1->GetPublicKeyHex(true, starting_point);
+            cpub = secp256k1->GetPublicKeyHex(starting_point);
             if (bf1.may_contain(cpub)) {
                 print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Higher Range Half]" << endl;
                 Point P(starting_point);
@@ -284,10 +284,10 @@ auto main() -> int {
                 string cpub1;
                 for (auto p : pow10_points) {
                     int count = 0;
-                    cpub1 = secp256k1->GetPublicKeyHex(true, P);
+                    cpub1 = secp256k1->GetPublicKeyHex(P);
                     while (bf1.may_contain(cpub1)) {
                         P = secp256k1->SubtractDirect(P, p);
-                        cpub1 = secp256k1->GetPublicKeyHex(true, P);
+                        cpub1 = secp256k1->GetPublicKeyHex(P);
                         count += 1;
                     }
                     privkey_num.push_back(pow10_nums[index] * (count - 1));
@@ -302,7 +302,7 @@ auto main() -> int {
                 privkey.Add(&pre_calc_sum, &Int_temp);
                 privkey.Mult(mult);
                 calc_point = secp256k1->ComputePublicKey(&privkey);
-                if (secp256k1->GetPublicKeyHex(true, calc_point) == search_pub) {
+                if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) {
                     print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
                     ofstream outFile;
                     outFile.open("found.txt", ios::app);
@@ -329,10 +329,10 @@ auto main() -> int {
                 string cpub2;
                 for (auto p : pow10_points) {
                     int count = 0;
-                    cpub2 = secp256k1->GetPublicKeyHex(true, P);
+                    cpub2 = secp256k1->GetPublicKeyHex(P);
                     while (bf2.may_contain(cpub2)) {
                         P = secp256k1->SubtractDirect(P, p);
-                        cpub2 = secp256k1->GetPublicKeyHex(true, P);
+                        cpub2 = secp256k1->GetPublicKeyHex(P);
                         count += 1;
                     }
                     privkey_num.push_back(pow10_nums[index] * (count - 1));
@@ -348,7 +348,7 @@ auto main() -> int {
                 privkey.Mult(mult);
                 privkey.AddOne();
                 calc_point = secp256k1->ComputePublicKey(&privkey);
-                if (secp256k1->GetPublicKeyHex(true, calc_point) == search_pub) {
+                if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) {
                     print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
                     ofstream outFile;
                     outFile.open("found.txt", ios::app);
@@ -370,7 +370,7 @@ auto main() -> int {
             stride_sum.Add(&stride);
             save_counter += 1;
             if (save_counter % 20000000 == 0) {
-                cpub = secp256k1->GetPublicKeyHex(true, starting_point);
+                cpub = secp256k1->GetPublicKeyHex(starting_point);
                 ofstream outFile;
                 outFile.open("settings2.txt");
                 outFile << cpub <<'\n';

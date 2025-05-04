@@ -139,13 +139,13 @@ auto main() -> int {
     
     ofstream outFile1;
     outFile1.open("settings1.txt", ios::app);
-    outFile1 << secp256k1->GetPublicKeyHex(true, Q2) <<'\n';
+    outFile1 << secp256k1->GetPublicKeyHex(Q2) <<'\n';
     outFile1 << stride_sum.GetBase10() << '\n';
     outFile1.close();
     
     ofstream outFile2;
     outFile2.open("settings2.txt", ios::app);
-    outFile2 << secp256k1->GetPublicKeyHex(true, Q2) <<'\n';
+    outFile2 << secp256k1->GetPublicKeyHex(Q2) <<'\n';
     outFile2 << stride_sum.GetBase10() << '\n';
     outFile2.close();
     
@@ -162,7 +162,7 @@ auto main() -> int {
         print_time(); cout << "Creating BloomFile1" << '\n';
         string cpub;
         for (int i = 0; i < int(n_elements); i++) {
-             bf.insert(secp256k1->GetPublicKeyHex(true, P));
+             bf.insert(secp256k1->GetPublicKeyHex(P));
             P = secp256k1->AddDirect(P, secp256k1->G);
         }
         print_time(); cout << "Writing BloomFile1 to bloom1.bf" << '\n';
@@ -182,7 +182,7 @@ auto main() -> int {
         filter bf(n_elements, error);
         print_time(); cout << "Creating BloomFile2" << '\n';
         for (int i = 0; i < int(n_elements); i++) {
-            bf.insert(secp256k1->GetPublicKeyHex(true, P));
+            bf.insert(secp256k1->GetPublicKeyHex(P));
             P = secp256k1->AddDirect(P, secp256k1->G);
         }
         print_time(); cout << "Writing BloomFile2 to bloom2.bf" << '\n'; 
