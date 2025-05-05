@@ -145,7 +145,7 @@ auto main() -> int {
     
     print_time(); cout << "Settings written to file" << endl;
     
-    using filter = boost::bloom::filter<std::string, 24>;
+    using filter = boost::bloom::filter<std::string, 32>;
     
     auto bloom_create1 = [&]() {
         string bloomfile = "bloom1.bf";
