@@ -13,7 +13,7 @@ Requires C/C++ GMP Library to be installed. <a href="https://gmplib.org">https:/
 [14:43:23] Creating BloomFile1
 [14:48:54] Writing BloomFile2 to bloom2.bf
 [14:48:57] Writing BloomFile1 to bloom1.bf
-[14:48:57] Elapsed time: (0)hours (5)minutes (34)seconds
+[14:48:57] Elapsed time: (0)hours (3)minutes (34)seconds
 
 [alexander@alexander-home Point_Search_CPP2]$ ./point_search
 [14:49:04] S_table generated
@@ -28,6 +28,6 @@ Requires C/C++ GMP Library to be installed. <a href="https://gmplib.org">https:/
 [14:49:08] False Positive
 [14:49:33] BloomFilter Hit bloom2.bf (Odd Point) [Lower Range Half]
 [14:49:33] Privatekey: 3052923631068611
-[14:49:33] Elapsed time: (0)hours (0)minutes (29)seconds
+[14:49:33] Elapsed time: (0)hours (0)minutes (28)seconds
 
 </pre>
