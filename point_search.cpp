@@ -99,7 +99,7 @@ auto main() -> int {
     
     string bloomfile1 = "bloom1.bf";
     string bloomfile2 = "bloom2.bf";
-    using filter = boost::bloom::filter<std::string, 24>;
+    using filter = boost::bloom::filter<std::string, 32>;
     
     print_time(); cout << "Loading Bloomfilter bloom1.bf" << endl;
     filter bf1;
