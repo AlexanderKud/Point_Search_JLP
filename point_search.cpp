@@ -244,7 +244,7 @@ auto main() -> int {
             starting_point = secp256k1->AddDirect(starting_point, stride_point);
             stride_sum.Add(&stride);
             save_counter += 1;
-            if (save_counter % 20000000 == 0) {
+            if (save_counter % 50000000 == 0) {
                 cpub = secp256k1->GetPublicKeyHex(starting_point);
                 ofstream outFile;
                 outFile.open("settings1.txt");
@@ -369,7 +369,7 @@ auto main() -> int {
             starting_point = secp256k1->SubtractDirect(starting_point, stride_point);
             stride_sum.Add(&stride);
             save_counter += 1;
-            if (save_counter % 20000000 == 0) {
+            if (save_counter % 50000000 == 0) {
                 cpub = secp256k1->GetPublicKeyHex(starting_point);
                 ofstream outFile;
                 outFile.open("settings2.txt");
