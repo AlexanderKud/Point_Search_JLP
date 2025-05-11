@@ -15,6 +15,20 @@ Requires C/C++ GMP Library to be installed. <a href="https://gmplib.org">https:/
 [14:48:57] Writing BloomFile1 to bloom1.bf
 [14:48:57] Elapsed time: (0)hours (3)minutes (34)seconds
 
+[alexander@alexander-home Point_Search_CPP2]$ ./generate_bloom_2
+[00:05:01] P_table generated
+[00:05:01] Range Start: 51 bits
+[00:05:01] Range End  : 52 bits
+[00:05:01] Block Width: 2^25
+[00:05:01] Search Pub : 033195139de0331d7a5cab602c4471f728f2e3fb97ed82f593d49ed30ec3c0ba85
+[00:05:01] Settings written to file
+[00:05:01] Creating BloomFile1 with 4 threads
+[00:05:01] Creating BloomFile2 with 4 threads
+[00:06:37] Writing BloomFile2 to bloom2.bf
+[00:06:38] Writing BloomFile1 to bloom1.bf
+[00:06:38] Elapsed time: (0)hours (1)minutes (37)seconds
+
+
 [alexander@alexander-home Point_Search_CPP2]$ ./point_search
 [14:49:04] S_table generated
 [14:49:04] Range Start: 51 bits

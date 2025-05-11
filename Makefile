@@ -5,7 +5,9 @@ default:
 	g++ -m64 -mssse3 -Wno-write-strings -O3 -c secp256k1/IntMod.cpp -o IntMod.o
 	g++ -m64 -mssse3 -Wno-write-strings -O3 -c secp256k1/IntGroup.cpp -o IntGroup.o
 	g++ -O3 -march=native -Wno-write-strings -c generate_bloom.cpp
+	g++ -O3 -march=native -Wno-write-strings -c generate_bloom_2.cpp
 	g++ -O3 -march=native -Wno-write-strings -c point_search.cpp
 	g++ -o generate_bloom generate_bloom.o SECP256K1.o Int.o IntGroup.o IntMod.o Point.o -lgmp
+	g++ -o generate_bloom_2 generate_bloom_2.o SECP256K1.o Int.o IntGroup.o IntMod.o Point.o -lgmp
 	g++ -o point_search point_search.o SECP256K1.o Int.o IntGroup.o IntMod.o Point.o -lgmp
 	rm *.o
