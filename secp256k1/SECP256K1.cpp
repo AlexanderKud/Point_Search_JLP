@@ -29,7 +29,6 @@ void Secp256K1::Init() {
       GTable[i * 256 + j] = N;
       N = AddPoints(N, GTable[i * 256]);
     }
-    GTable[i * 256 + 255] = N; // Dummy point for check function
   }
 
 }
