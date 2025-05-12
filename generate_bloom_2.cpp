@@ -6,7 +6,6 @@
 #include <vector>
 #include <algorithm>
 #include <thread>
-#include <mutex>
 #include <cmath>
 
 #include "secp256k1/SECP256k1.h"
@@ -164,12 +163,10 @@ auto main() -> int {
         }
 
         filter bf(n_elements, error);
-        //std::mutex bf_mutex;
         
         auto process_chunk = [&](Point start_point) {            
             Point current = start_point;
             for (uint64_t i = 0; i < count; i++) {
-                //std::lock_guard<std::mutex> lock(bf_mutex);
                 bf.insert(secp256k1->GetPublicKeyHex(current));
                 current = secp256k1->AddDirect(current, secp256k1->G);
             }
@@ -205,12 +202,10 @@ auto main() -> int {
         }
         
         filter bf(n_elements, error);
-        //std::mutex bf_mutex;
         
         auto process_chunk = [&](Point start_point) {            
             Point current = start_point;
             for (uint64_t i = 0; i < count; i++) {
-                //std::lock_guard<std::mutex> lock(bf_mutex);
                 bf.insert(secp256k1->GetPublicKeyHex(current));
                 current = secp256k1->AddDirect(current, secp256k1->G);
             }
