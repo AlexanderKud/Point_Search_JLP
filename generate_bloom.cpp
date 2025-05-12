@@ -90,7 +90,7 @@ auto main() -> int {
     Point P;
     for (int i = 0; i < 256; i++)
     {
-        P = secp256k1->ComputePublicKey(&pk);
+        P = secp256k1->ScalarMultiplication(&pk);
         P_table.push_back(P);
         pk.Mult(mult);
     }
@@ -117,19 +117,19 @@ auto main() -> int {
     Int d_05, div2;
     d_05.SetBase10("57896044618658097711785492504343953926418782139537452191302581570759080747169");
     div2.SetBase10("2");
-    point_05 = secp256k1->ComputePublicKey(&d_05);
+    point_05 = secp256k1->ScalarMultiplication(&d_05);
     puzzle_point = secp256k1->ParsePublicKeyHex(search_pub);
-    puzzle_point_05 = secp256k1->AddDirect(puzzle_point, point_05);
+    puzzle_point_05 = secp256k1->AddPoints(puzzle_point, point_05);
 
-    puzzle_point_divide2 = secp256k1->PointDivision2(puzzle_point, &div2);
+    puzzle_point_divide2 = secp256k1->PointDivision(puzzle_point, &div2);
 
     first_point  = P_table[range_start - 1];
     second_point = P_table[range_start - 2];
 
-    P1 = secp256k1->Subtract(puzzle_point_divide2, first_point);
-    P2 = secp256k1->Subtract(puzzle_point_divide2, second_point);
-    Q1 = secp256k1->AddDirect(P1, P2);
-    Q2 = secp256k1->AddDirect(puzzle_point_divide2, Q1);
+    P1 = secp256k1->SubtractPoints(puzzle_point_divide2, first_point);
+    P2 = secp256k1->SubtractPoints(puzzle_point_divide2, second_point);
+    Q1 = secp256k1->AddPoints(P1, P2);
+    Q2 = secp256k1->AddPoints(puzzle_point_divide2, Q1);
     
     ofstream outFile1;
     outFile1.open("settings1.txt", ios::app);
@@ -146,19 +146,43 @@ auto main() -> int {
     print_time(); cout << "Settings written to file" << endl;
     
     using filter = boost::bloom::filter<std::string, 32>;
+    uint64_t n_elements = uint64_t(pow(2, block_width) * 1.0);
+    double error = 0.0000000001;
+    int n_cores = 4; //actual number of processing cores but equal to some power of two value(2,4,8,16,32,64,...)
+    uint64_t count = uint64_t(pow(2, block_width) / n_cores);
+    Int add_key; add_key.SetInt64(count);
+    Point Add_Point = secp256k1->ScalarMultiplication(&add_key);
     
     auto bloom_create1 = [&]() {
         string bloomfile = "bloom1.bf";
-        uint64_t n_elements = uint64_t(pow(2, block_width) * 1.0);
-        double error = 0.0000000001;
         Point P(puzzle_point);
-        filter bf(n_elements, error);
-        print_time(); cout << "Creating BloomFile1" << '\n';
-        string cpub;
-        for (int i = 0; i < int(n_elements); i++) {
-             bf.insert(secp256k1->GetPublicKeyHex(P));
-            P = secp256k1->AddDirect(P, secp256k1->G);
+        vector<Point> starting_points;
+        for (int i = 0; i < n_cores; i++) {
+            starting_points.push_back(P);
+            P = secp256k1->AddPoints(P, Add_Point);
         }
+
+        filter bf(n_elements, error);
+        
+        auto process_chunk = [&](Point start_point) {            
+            Point current = start_point;
+            for (uint64_t i = 0; i < count; i++) {
+                bf.insert(secp256k1->GetPublicKeyHex(current));
+                current = secp256k1->AddPoints(current, secp256k1->G);
+            }
+        };
+        
+        std::thread myThreads[n_cores];
+        for (int i = 0; i < n_cores; i++) {
+            myThreads[i] = std::thread(process_chunk, starting_points[i]);
+        }
+    
+        print_time(); cout << "Creating BloomFile1 with " << n_cores << " threads" << '\n';
+
+        for (int i = 0; i < n_cores; i++) {
+            myThreads[i].join();
+        }
+
         print_time(); cout << "Writing BloomFile1 to bloom1.bf" << '\n';
         std::ofstream out(bloomfile, std::ios::binary);
         std::size_t c1= bf.capacity();
@@ -167,18 +191,37 @@ auto main() -> int {
         out.write((const char*) s1.data(), s1.size()); // save array
         out.close();
     };
-    
+
     auto bloom_create2 = [&]() {
         string bloomfile = "bloom2.bf";
-        uint64_t n_elements = uint64_t(pow(2, block_width) * 1.0);
-        double error = 0.0000000001;
         Point P(puzzle_point_05);
-        filter bf(n_elements, error);
-        print_time(); cout << "Creating BloomFile2" << '\n';
-        for (int i = 0; i < int(n_elements); i++) {
-            bf.insert(secp256k1->GetPublicKeyHex(P));
-            P = secp256k1->AddDirect(P, secp256k1->G);
+        vector<Point> starting_points;
+        for (int i = 0; i < n_cores; i++) {
+            starting_points.push_back(P);
+            P = secp256k1->AddPoints(P, Add_Point);
         }
+        
+        filter bf(n_elements, error);
+        
+        auto process_chunk = [&](Point start_point) {            
+            Point current = start_point;
+            for (uint64_t i = 0; i < count; i++) {
+                bf.insert(secp256k1->GetPublicKeyHex(current));
+                current = secp256k1->AddPoints(current, secp256k1->G);
+            }
+        };
+        
+        std::thread myThreads[n_cores];
+        for (int i = 0; i < n_cores; i++) {
+            myThreads[i] = std::thread(process_chunk, starting_points[i]);
+        }
+    
+        print_time(); cout << "Creating BloomFile2 with " << n_cores << " threads" << '\n';
+
+        for (int i = 0; i < n_cores; i++) {
+            myThreads[i].join();
+        }
+
         print_time(); cout << "Writing BloomFile2 to bloom2.bf" << '\n'; 
         std::ofstream out(bloomfile, std::ios::binary);
         std::size_t c1= bf.capacity();

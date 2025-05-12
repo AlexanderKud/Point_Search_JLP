@@ -127,7 +127,7 @@ auto main() -> int {
     Int pow_key;
     for (auto n : pow10_nums) {
         pow_key.SetInt64(n);
-        pow10_points.push_back(secp256k1->ComputePublicKey(&pow_key));
+        pow10_points.push_back(secp256k1->ScalarMultiplication(&pow_key));
     }
     
     auto start = std::chrono::high_resolution_clock::now();
@@ -147,7 +147,7 @@ auto main() -> int {
         inFile.close();
         
         stride.SetInt64(uint64_t(pow(2, block_width)));
-        stride_point = secp256k1->ComputePublicKey(&stride);
+        stride_point = secp256k1->ScalarMultiplication(&stride);
         
         while (true) {
             cpub = secp256k1->GetPublicKeyHex(starting_point);
@@ -161,12 +161,12 @@ auto main() -> int {
                     int count = 0;
                     cpub1 = secp256k1->GetPublicKeyHex(P);
                     while (bf1.may_contain(cpub1)) {
-                        P = secp256k1->SubtractDirect(P, p);
+                        P = secp256k1->SubtractPoints(P, p);
                         cpub1 = secp256k1->GetPublicKeyHex(P);
                         count += 1;
                     }
                     privkey_num.push_back(pow10_nums[index] * (count - 1));
-                    P = secp256k1->AddDirect(P, p);
+                    P = secp256k1->AddPoints(P, p);
                     index += 1;
                 }
                 Int Int_steps, Int_temp, privkey;
@@ -176,7 +176,7 @@ auto main() -> int {
                 Int_temp.Sub(&stride_sum, &Int_steps);
                 privkey.Sub(&pre_calc_sum, &Int_temp);
                 privkey.Mult(mult);
-                calc_point = secp256k1->ComputePublicKey(&privkey);
+                calc_point = secp256k1->ScalarMultiplication(&privkey);
                 if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) {
                     print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
                     ofstream outFile;
@@ -206,12 +206,12 @@ auto main() -> int {
                     int count = 0;
                     cpub2 = secp256k1->GetPublicKeyHex(P);
                     while (bf2.may_contain(cpub2)) {
-                        P = secp256k1->SubtractDirect(P, p);
+                        P = secp256k1->SubtractPoints(P, p);
                         cpub2 = secp256k1->GetPublicKeyHex(P);
                         count += 1;
                     }
                     privkey_num.push_back(pow10_nums[index] * (count - 1));
-                    P = secp256k1->AddDirect(P, p);
+                    P = secp256k1->AddPoints(P, p);
                     index += 1;
                 }
                 Int Int_steps, Int_temp, privkey;
@@ -222,7 +222,7 @@ auto main() -> int {
                 privkey.Sub(&pre_calc_sum, &Int_temp);
                 privkey.Mult(mult);
                 privkey.AddOne();
-                calc_point = secp256k1->ComputePublicKey(&privkey);
+                calc_point = secp256k1->ScalarMultiplication(&privkey);
                 if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) {
                     print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
                     ofstream outFile;
@@ -241,7 +241,7 @@ auto main() -> int {
                 }
                 print_time(); cout << "False Positive" << endl; 
             }
-            starting_point = secp256k1->AddDirect(starting_point, stride_point);
+            starting_point = secp256k1->AddPoints(starting_point, stride_point);
             stride_sum.Add(&stride);
             save_counter += 1;
             if (save_counter % 50000000 == 0) {
@@ -272,7 +272,7 @@ auto main() -> int {
         inFile.close();
         
         stride.SetInt64(uint64_t(pow(2, block_width)));
-        stride_point = secp256k1->ComputePublicKey(&stride);
+        stride_point = secp256k1->ScalarMultiplication(&stride);
         
         while (true) {
             cpub = secp256k1->GetPublicKeyHex(starting_point);
@@ -286,12 +286,12 @@ auto main() -> int {
                     int count = 0;
                     cpub1 = secp256k1->GetPublicKeyHex(P);
                     while (bf1.may_contain(cpub1)) {
-                        P = secp256k1->SubtractDirect(P, p);
+                        P = secp256k1->SubtractPoints(P, p);
                         cpub1 = secp256k1->GetPublicKeyHex(P);
                         count += 1;
                     }
                     privkey_num.push_back(pow10_nums[index] * (count - 1));
-                    P = secp256k1->AddDirect(P, p);
+                    P = secp256k1->AddPoints(P, p);
                     index += 1;
                 }
                 Int Int_steps, Int_temp, privkey;
@@ -301,7 +301,7 @@ auto main() -> int {
                 Int_temp.Add(&stride_sum, &Int_steps);
                 privkey.Add(&pre_calc_sum, &Int_temp);
                 privkey.Mult(mult);
-                calc_point = secp256k1->ComputePublicKey(&privkey);
+                calc_point = secp256k1->ScalarMultiplication(&privkey);
                 if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) {
                     print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
                     ofstream outFile;
@@ -331,12 +331,12 @@ auto main() -> int {
                     int count = 0;
                     cpub2 = secp256k1->GetPublicKeyHex(P);
                     while (bf2.may_contain(cpub2)) {
-                        P = secp256k1->SubtractDirect(P, p);
+                        P = secp256k1->SubtractPoints(P, p);
                         cpub2 = secp256k1->GetPublicKeyHex(P);
                         count += 1;
                     }
                     privkey_num.push_back(pow10_nums[index] * (count - 1));
-                    P = secp256k1->AddDirect(P, p);
+                    P = secp256k1->AddPoints(P, p);
                     index += 1;
                 }
                 Int Int_steps, Int_temp, privkey;
@@ -347,7 +347,7 @@ auto main() -> int {
                 privkey.Add(&pre_calc_sum, &Int_temp);
                 privkey.Mult(mult);
                 privkey.AddOne();
-                calc_point = secp256k1->ComputePublicKey(&privkey);
+                calc_point = secp256k1->ScalarMultiplication(&privkey);
                 if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) {
                     print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
                     ofstream outFile;
@@ -366,7 +366,7 @@ auto main() -> int {
                 }
                 print_time(); cout << "False Positive" << endl;
             }
-            starting_point = secp256k1->SubtractDirect(starting_point, stride_point);
+            starting_point = secp256k1->SubtractPoints(starting_point, stride_point);
             stride_sum.Add(&stride);
             save_counter += 1;
             if (save_counter % 50000000 == 0) {
