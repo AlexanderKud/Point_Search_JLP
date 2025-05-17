@@ -84,7 +84,7 @@ auto main() -> int {
     auto addition_search = [&]() {
         uint64_t mult = 2;
         int save_counter = 0;
-        string temp, cpub;
+        string temp;
         Point start_point, stride_point, calc_point;
         Int stride_sum, stride;
         ifstream inFile("settings1.txt");
