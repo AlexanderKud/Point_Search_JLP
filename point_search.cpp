@@ -5,69 +5,18 @@
 #include <vector>
 #include <algorithm>
 #include <thread>
-#include <cmath>
 
 #include "secp256k1/SECP256k1.h"
 #include "secp256k1/Int.h"
 #include "bloom/filter.hpp"
+#include "util/util.h"
 
 using namespace std;
-
-inline uint64_t str_to_uint64(std::string const& value) {
-  uint64_t result = 0;
-  size_t const length = value.size();
-  switch (length) {
-    case 20:    result += (value[length - 20] - '0') * 10000000000000000000ULL;
-    case 19:    result += (value[length - 19] - '0') * 1000000000000000000ULL;
-    case 18:    result += (value[length - 18] - '0') * 100000000000000000ULL;
-    case 17:    result += (value[length - 17] - '0') * 10000000000000000ULL;
-    case 16:    result += (value[length - 16] - '0') * 1000000000000000ULL;
-    case 15:    result += (value[length - 15] - '0') * 100000000000000ULL;
-    case 14:    result += (value[length - 14] - '0') * 10000000000000ULL;
-    case 13:    result += (value[length - 13] - '0') * 1000000000000ULL;
-    case 12:    result += (value[length - 12] - '0') * 100000000000ULL;
-    case 11:    result += (value[length - 11] - '0') * 10000000000ULL;
-    case 10:    result += (value[length - 10] - '0') * 1000000000ULL;
-    case  9:    result += (value[length -  9] - '0') * 100000000ULL;
-    case  8:    result += (value[length -  8] - '0') * 10000000ULL;
-    case  7:    result += (value[length -  7] - '0') * 1000000ULL;
-    case  6:    result += (value[length -  6] - '0') * 100000ULL;
-    case  5:    result += (value[length -  5] - '0') * 10000ULL;
-    case  4:    result += (value[length -  4] - '0') * 1000ULL;
-    case  3:    result += (value[length -  3] - '0') * 100ULL;
-    case  2:    result += (value[length -  2] - '0') * 10ULL;
-    case  1:    result += (value[length -  1] - '0');
-  }
-  return result;
-}
-
-std::string trim(const std::string& str) {
-    auto start = str.begin();
-    while (start != str.end() && std::isspace(*start)) ++start;
-    auto end = str.end();
-    do { --end; } while (end != start && std::isspace(*end));
-    return std::string(start, end + 1);
-}
-
-void print_time() {
-    time_t timestamp = time(NULL);
-    struct tm datetime = *localtime(&timestamp);
-    char output[50];
-    strftime(output, 50, "%H:%M:%S", &datetime);
-    cout << "[" << output << "] ";
-}
-
-vector<uint64_t> break_down_to_pow10(uint64_t num) {
-    vector<uint64_t> nums;
-    string stri = to_string(num);
-    int num_len = stri.length() - 2;
-    for (int pw = num_len; pw >= 0; pw--) { nums.push_back(uint64_t(pow(10, pw))); }
-    return nums;
-}
 
 auto main() -> int {
 
     Secp256K1* secp256k1 = new Secp256K1(); secp256k1->Init();
+    int cpuCores = 4; // actual number of processing cores divided by 2
     
     Int pk; pk.SetBase10("1");
     uint64_t mult = 2;
@@ -133,15 +82,14 @@ auto main() -> int {
     auto start = std::chrono::high_resolution_clock::now();
     
     auto addition_search = [&]() {
-        int len = 66;
         uint64_t mult = 2;
         int save_counter = 0;
         string temp, cpub;
-        Point starting_point, stride_point, calc_point;
+        Point start_point, stride_point, calc_point;
         Int stride_sum, stride;
         ifstream inFile("settings1.txt");
         getline(inFile, temp);
-        starting_point = secp256k1->ParsePublicKeyHex(trim(temp));
+        start_point = secp256k1->ParsePublicKeyHex(trim(temp));
         getline(inFile, temp);
         stride_sum.SetBase10(trim(temp).data());
         inFile.close();
@@ -149,124 +97,172 @@ auto main() -> int {
         stride.SetInt64(uint64_t(pow(2, block_width)));
         stride_point = secp256k1->ScalarMultiplication(&stride);
         
-        while (true) {
-            cpub = secp256k1->GetPublicKeyHex(starting_point);
-            if (bf1.may_contain(cpub)) {
-                print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
-                Point P(starting_point);
-                vector<uint64_t> privkey_num;
-                int index = 0;
-                string cpub1;
-                for (auto p : pow10_points) {
-                    int count = 0;
-                    cpub1 = secp256k1->GetPublicKeyHex(P);
-                    while (bf1.may_contain(cpub1)) {
-                        P = secp256k1->SubtractPoints(P, p);
-                        cpub1 = secp256k1->GetPublicKeyHex(P);
-                        count += 1;
-                    }
-                    privkey_num.push_back(pow10_nums[index] * (count - 1));
-                    P = secp256k1->AddPoints(P, p);
-                    index += 1;
-                }
-                Int Int_steps, Int_temp, privkey;
-                uint64_t steps = 0;
-                for (auto i : privkey_num) { steps += i; }
-                Int_steps.SetInt64(steps);
-                Int_temp.Sub(&stride_sum, &Int_steps);
-                privkey.Sub(&pre_calc_sum, &Int_temp);
-                privkey.Mult(mult);
-                calc_point = secp256k1->ScalarMultiplication(&privkey);
-                if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) {
-                    print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
-                    ofstream outFile;
-                    outFile.open("found.txt", ios::app);
-                    outFile << privkey.GetBase10() << '\n';
-                    outFile.close();
-                    auto end = std::chrono::high_resolution_clock::now();
-                    auto duration = end - start;
-                    auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
-                    duration -= hours;
-                    auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
-                    duration -= minutes;
-                    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-                    print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
-                    exit(0);
-                }
-                print_time(); cout << "False Positive" << endl;
-            }
-            
-            if (bf2.may_contain(cpub)) {
-                print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Lower Range Half]" << endl;
-                Point P(starting_point);
-                vector<uint64_t> privkey_num;
-                int index = 0;
-                string cpub2;
-                for (auto p : pow10_points) {
-                    int count = 0;
-                    cpub2 = secp256k1->GetPublicKeyHex(P);
-                    while (bf2.may_contain(cpub2)) {
-                        P = secp256k1->SubtractPoints(P, p);
-                        cpub2 = secp256k1->GetPublicKeyHex(P);
-                        count += 1;
-                    }
-                    privkey_num.push_back(pow10_nums[index] * (count - 1));
-                    P = secp256k1->AddPoints(P, p);
-                    index += 1;
-                }
-                Int Int_steps, Int_temp, privkey;
-                uint64_t steps = 0;
-                for (auto i : privkey_num) { steps += i; }
-                Int_steps.SetInt64(steps);
-                Int_temp.Sub(&stride_sum, &Int_steps);
-                privkey.Sub(&pre_calc_sum, &Int_temp);
-                privkey.Mult(mult);
-                privkey.AddOne();
-                calc_point = secp256k1->ScalarMultiplication(&privkey);
-                if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) {
-                    print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
-                    ofstream outFile;
-                    outFile.open("found.txt", ios::app);
-                    outFile << privkey.GetBase10() << '\n';
-                    outFile.close();
-                    auto end = std::chrono::high_resolution_clock::now();
-                    auto duration = end - start;
-                    auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
-                    duration -= hours;
-                    auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
-                    duration -= minutes;
-                    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-                    print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
-                    exit(0);
-                }
-                print_time(); cout << "False Positive" << endl; 
-            }
-            starting_point = secp256k1->AddPoints(starting_point, stride_point);
-            stride_sum.Add(&stride);
-            save_counter += 1;
-            if (save_counter % 50000000 == 0) {
+        int n_cores = cpuCores;
+    
+        Int offset_Step, int_Cores, vector_Num;
+        int_Cores.SetInt32(n_cores);
+        offset_Step.floor_Div(&S_table[range_start - 2], &int_Cores);
+        
+        vector_Num.SetInt32(0);
+        vector<Int> offset_Nums;
+        for (int i = 0; i < n_cores; i++) {
+            offset_Nums.push_back(vector_Num);
+            vector_Num.Add(&offset_Step);
+        }
+        
+        vector<Point> offset_Points;
+        offset_Points.push_back(secp256k1->G);
+        for (int i = 1; i < n_cores; i++) {
+            offset_Points.push_back(secp256k1->ScalarMultiplication(&offset_Nums[i]));
+        }
+
+        vector<Point> starting_Points;
+        Point vector_Point(start_point);
+        starting_Points.push_back(vector_Point);
+
+        for (int i = 1; i < n_cores; i++) {
+            vector_Point = secp256k1->AddPoints(start_point, offset_Points[i]);
+            starting_Points.push_back(vector_Point);
+        }
+        
+        auto scalable_addition_search = [&](Point starting_Point, int threadIdx, Int offset, Int stride_Sum) {
+            Point starting_point(starting_Point);
+            Int stride_sum; stride_sum.Set(&stride_Sum);
+            string cpub;
+        
+            while (true) {
                 cpub = secp256k1->GetPublicKeyHex(starting_point);
-                ofstream outFile;
-                outFile.open("settings1.txt");
-                outFile << cpub <<'\n';
-                outFile << stride_sum.GetBase10() << '\n';
-                outFile.close();
-                save_counter = 0;
-                print_time(); cout << "Save Data written to settings1.txt" << endl;
-            }
+                if (bf1.may_contain(cpub)) {
+                    print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
+                    Point P(starting_point);
+                    vector<uint64_t> privkey_num;
+                    int index = 0;
+                    string cpub1;
+                    for (auto p : pow10_points) {
+                        int count = 0;
+                        cpub1 = secp256k1->GetPublicKeyHex(P);
+                        while (bf1.may_contain(cpub1)) {
+                            P = secp256k1->SubtractPoints(P, p);
+                            cpub1 = secp256k1->GetPublicKeyHex(P);
+                            count += 1;
+                        }
+                        privkey_num.push_back(pow10_nums[index] * (count - 1));
+                        P = secp256k1->AddPoints(P, p);
+                        index += 1;
+                    }
+                    Int Int_steps, Int_temp, privkey;
+                    uint64_t steps = 0;
+                    for (auto i : privkey_num) { steps += i; }
+                    Int_steps.SetInt64(steps);
+                    Int_temp.Add(&stride_sum, &offset);
+                    Int_temp.Sub(&Int_steps);
+                    privkey.Sub(&pre_calc_sum, &Int_temp);
+                    privkey.Mult(mult);
+                    calc_point = secp256k1->ScalarMultiplication(&privkey);
+                    if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) {
+                        print_time(); cout << "Privatekey: " << privkey.GetBase16() << endl;
+                        ofstream outFile;
+                        outFile.open("found.txt", ios::app);
+                        outFile << privkey.GetBase16() << '\n';
+                        outFile.close();
+                        auto end = std::chrono::high_resolution_clock::now();
+                        auto duration = end - start;
+                        auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
+                        duration -= hours;
+                        auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
+                        duration -= minutes;
+                        auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+                        print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
+                        exit(0);
+                    }
+                    print_time(); cout << "False Positive" << endl;
+                }
+                
+                if (bf2.may_contain(cpub)) {
+                    print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Lower Range Half]" << endl;
+                    Point P(starting_point);
+                    vector<uint64_t> privkey_num;
+                    int index = 0;
+                    string cpub2;
+                    for (auto p : pow10_points) {
+                        int count = 0;
+                        cpub2 = secp256k1->GetPublicKeyHex(P);
+                        while (bf2.may_contain(cpub2)) {
+                            P = secp256k1->SubtractPoints(P, p);
+                            cpub2 = secp256k1->GetPublicKeyHex(P);
+                            count += 1;
+                        }
+                        privkey_num.push_back(pow10_nums[index] * (count - 1));
+                        P = secp256k1->AddPoints(P, p);
+                        index += 1;
+                    }
+                    Int Int_steps, Int_temp, privkey;
+                    uint64_t steps = 0;
+                    for (auto i : privkey_num) { steps += i; }
+                    Int_steps.SetInt64(steps);
+                    Int_temp.Add(&stride_sum, &offset);
+                    Int_temp.Sub(&Int_steps);
+                    privkey.Sub(&pre_calc_sum, &Int_temp);
+                    privkey.Mult(mult);
+                    privkey.AddOne();
+                    calc_point = secp256k1->ScalarMultiplication(&privkey);
+                    if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) {
+                        print_time(); cout << "Privatekey: " << privkey.GetBase16() << endl;
+                        ofstream outFile;
+                        outFile.open("found.txt", ios::app);
+                        outFile << privkey.GetBase16() << '\n';
+                        outFile.close();
+                        auto end = std::chrono::high_resolution_clock::now();
+                        auto duration = end - start;
+                        auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
+                        duration -= hours;
+                        auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
+                        duration -= minutes;
+                        auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+                        print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
+                        exit(0);
+                    }
+                    print_time(); cout << "False Positive" << endl; 
+                }
+                
+                starting_point = secp256k1->AddPoints(starting_point, stride_point);
+                stride_sum.Add(&stride);
+                
+                if (threadIdx == 0) {
+                    save_counter += 1;
+                    if (save_counter % 70000000 == 0) {
+                        cpub = secp256k1->GetPublicKeyHex(starting_point);
+                        ofstream outFile;
+                        outFile.open("settings1.txt");
+                        outFile << cpub <<'\n';
+                        outFile << stride_sum.GetBase10() << '\n';
+                        outFile.close();
+                        save_counter = 0;
+                        print_time(); cout << "Save Data written to settings1.txt" << endl;
+                    }
+                }
+             }
+         };
+        
+        std::thread addition_Threads[n_cores];
+        for (int i = 0; i < n_cores; i++) {
+            addition_Threads[i] = std::thread(scalable_addition_search, starting_Points[i], i , offset_Nums[i], stride_sum);
+        }
+
+        for (int i = 0; i < n_cores; i++) {
+            addition_Threads[i].join();
         }
     };
     
     auto subtraction_search = [&]() {
-        int len = 66;
         uint64_t mult = 2;
         int save_counter = 0;
-        string temp, cpub;
-        Point starting_point,stride_point, calc_point;
+        string temp;
+        Point start_point,stride_point, calc_point;
         Int stride_sum, stride;
         ifstream inFile("settings2.txt");
         getline(inFile, temp);
-        starting_point = secp256k1->ParsePublicKeyHex(trim(temp));
+        start_point = secp256k1->ParsePublicKeyHex(trim(temp));
         getline(inFile, temp);
         stride_sum.SetBase10(trim(temp).data());
         inFile.close();
@@ -274,111 +270,160 @@ auto main() -> int {
         stride.SetInt64(uint64_t(pow(2, block_width)));
         stride_point = secp256k1->ScalarMultiplication(&stride);
         
-        while (true) {
-            cpub = secp256k1->GetPublicKeyHex(starting_point);
-            if (bf1.may_contain(cpub)) {
-                print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Higher Range Half]" << endl;
-                Point P(starting_point);
-                vector<uint64_t> privkey_num;
-                int index = 0;
-                string cpub1;
-                for (auto p : pow10_points) {
-                    int count = 0;
-                    cpub1 = secp256k1->GetPublicKeyHex(P);
-                    while (bf1.may_contain(cpub1)) {
-                        P = secp256k1->SubtractPoints(P, p);
-                        cpub1 = secp256k1->GetPublicKeyHex(P);
-                        count += 1;
-                    }
-                    privkey_num.push_back(pow10_nums[index] * (count - 1));
-                    P = secp256k1->AddPoints(P, p);
-                    index += 1;
-                }
-                Int Int_steps, Int_temp, privkey;
-                uint64_t steps = 0;
-                for (auto i : privkey_num) { steps += i; }
-                Int_steps.SetInt64(steps);
-                Int_temp.Add(&stride_sum, &Int_steps);
-                privkey.Add(&pre_calc_sum, &Int_temp);
-                privkey.Mult(mult);
-                calc_point = secp256k1->ScalarMultiplication(&privkey);
-                if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) {
-                    print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
-                    ofstream outFile;
-                    outFile.open("found.txt", ios::app);
-                    outFile << privkey.GetBase10() << '\n';
-                    outFile.close();
-                    auto end = std::chrono::high_resolution_clock::now();
-                    auto duration = end - start;
-                    auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
-                    duration -= hours;
-                    auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
-                    duration -= minutes;
-                    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-                    print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
-                    exit(0);
-                }
-                print_time(); cout << "False Positive" << endl;
-            }
-            
-            if (bf2.may_contain(cpub)) {
-                print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Higher Range Half]" << endl;
-                Point P(starting_point);
-                vector<uint64_t> privkey_num;
-                int index = 0;
-                string cpub2;
-                for (auto p : pow10_points) {
-                    int count = 0;
-                    cpub2 = secp256k1->GetPublicKeyHex(P);
-                    while (bf2.may_contain(cpub2)) {
-                        P = secp256k1->SubtractPoints(P, p);
-                        cpub2 = secp256k1->GetPublicKeyHex(P);
-                        count += 1;
-                    }
-                    privkey_num.push_back(pow10_nums[index] * (count - 1));
-                    P = secp256k1->AddPoints(P, p);
-                    index += 1;
-                }
-                Int Int_steps, Int_temp, privkey;
-                uint64_t steps = 0;
-                for (auto i : privkey_num) { steps += i; }
-                Int_steps.SetInt64(steps);
-                Int_temp.Add(&stride_sum, &Int_steps);
-                privkey.Add(&pre_calc_sum, &Int_temp);
-                privkey.Mult(mult);
-                privkey.AddOne();
-                calc_point = secp256k1->ScalarMultiplication(&privkey);
-                if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) {
-                    print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
-                    ofstream outFile;
-                    outFile.open("found.txt", ios::app);
-                    outFile << privkey.GetBase10() << '\n';
-                    outFile.close();
-                    auto end = std::chrono::high_resolution_clock::now();
-                    auto duration = end - start;
-                    auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
-                    duration -= hours;
-                    auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
-                    duration -= minutes;
-                    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-                    print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
-                    exit(0);
-                }
-                print_time(); cout << "False Positive" << endl;
-            }
-            starting_point = secp256k1->SubtractPoints(starting_point, stride_point);
-            stride_sum.Add(&stride);
-            save_counter += 1;
-            if (save_counter % 50000000 == 0) {
+        int n_cores = cpuCores;
+        
+        Int offset_Step, int_Cores, vector_Num;
+        int_Cores.SetInt32(n_cores);
+        offset_Step.floor_Div(&S_table[range_start - 2], &int_Cores);
+        
+        vector_Num.SetInt32(0);
+        vector<Int> offset_Nums;
+        for (int i = 0; i < n_cores; i++) {
+            offset_Nums.push_back(vector_Num);
+            vector_Num.Add(&offset_Step);
+        }
+        
+        vector<Point> offset_Points;
+        offset_Points.push_back(secp256k1->G);
+        for (int i = 1; i < n_cores; i++) {
+            offset_Points.push_back(secp256k1->ScalarMultiplication(&offset_Nums[i]));
+        }
+
+        vector<Point> starting_Points;
+        Point vector_Point(start_point);
+        starting_Points.push_back(vector_Point);
+
+        for (int i = 1; i < n_cores; i++) {
+            vector_Point = secp256k1->SubtractPoints(start_point, offset_Points[i]);
+            starting_Points.push_back(vector_Point);
+        }
+        
+        auto scalable_subtraction_search = [&](Point starting_Point, int threadIdx, Int offset, Int stride_Sum) {
+            Point starting_point(starting_Point);
+            Int stride_sum; stride_sum.Set(&stride_Sum);
+            string cpub;
+        
+            while (true) {
                 cpub = secp256k1->GetPublicKeyHex(starting_point);
-                ofstream outFile;
-                outFile.open("settings2.txt");
-                outFile << cpub <<'\n';
-                outFile << stride_sum.GetBase10() << '\n';
-                outFile.close();
-                save_counter = 0;
-                print_time(); cout << "Save Data written to settings2.txt" << endl;
+                if (bf1.may_contain(cpub)) {
+                    print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Higher Range Half]" << endl;
+                    Point P(starting_point);
+                    vector<uint64_t> privkey_num;
+                    int index = 0;
+                    string cpub1;
+                    for (auto p : pow10_points) {
+                        int count = 0;
+                        cpub1 = secp256k1->GetPublicKeyHex(P);
+                        while (bf1.may_contain(cpub1)) {
+                            P = secp256k1->SubtractPoints(P, p);
+                            cpub1 = secp256k1->GetPublicKeyHex(P);
+                            count += 1;
+                        }
+                        privkey_num.push_back(pow10_nums[index] * (count - 1));
+                        P = secp256k1->AddPoints(P, p);
+                        index += 1;
+                    }
+                    Int Int_steps, Int_temp, privkey;
+                    uint64_t steps = 0;
+                    for (auto i : privkey_num) { steps += i; }
+                    Int_steps.SetInt64(steps);
+                    Int_temp.Add(&stride_sum, &offset);
+                    Int_temp.Add(&Int_steps);
+                    privkey.Add(&pre_calc_sum, &Int_temp);
+                    privkey.Mult(mult);
+                    calc_point = secp256k1->ScalarMultiplication(&privkey);
+                    if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) {
+                        print_time(); cout << "Privatekey: " << privkey.GetBase16() << endl;
+                        ofstream outFile;
+                        outFile.open("found.txt", ios::app);
+                        outFile << privkey.GetBase16() << '\n';
+                        outFile.close();
+                        auto end = std::chrono::high_resolution_clock::now();
+                        auto duration = end - start;
+                        auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
+                        duration -= hours;
+                        auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
+                        duration -= minutes;
+                        auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+                        print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
+                        exit(0);
+                    }
+                    print_time(); cout << "False Positive" << endl;
+                }
+                
+                if (bf2.may_contain(cpub)) {
+                    print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Higher Range Half]" << endl;
+                    Point P(starting_point);
+                    vector<uint64_t> privkey_num;
+                    int index = 0;
+                    string cpub2;
+                    for (auto p : pow10_points) {
+                        int count = 0;
+                        cpub2 = secp256k1->GetPublicKeyHex(P);
+                        while (bf2.may_contain(cpub2)) {
+                            P = secp256k1->SubtractPoints(P, p);
+                            cpub2 = secp256k1->GetPublicKeyHex(P);
+                            count += 1;
+                        }
+                        privkey_num.push_back(pow10_nums[index] * (count - 1));
+                        P = secp256k1->AddPoints(P, p);
+                        index += 1;
+                    }
+                    Int Int_steps, Int_temp, privkey;
+                    uint64_t steps = 0;
+                    for (auto i : privkey_num) { steps += i; }
+                    Int_steps.SetInt64(steps);
+                    Int_temp.Add(&stride_sum, &offset);
+                    Int_temp.Add(&Int_steps);
+                    privkey.Add(&pre_calc_sum, &Int_temp);
+                    privkey.Mult(mult);
+                    privkey.AddOne();
+                    calc_point = secp256k1->ScalarMultiplication(&privkey);
+                    if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) {
+                        print_time(); cout << "Privatekey: " << privkey.GetBase16() << endl;
+                        ofstream outFile;
+                        outFile.open("found.txt", ios::app);
+                        outFile << privkey.GetBase16() << '\n';
+                        outFile.close();
+                        auto end = std::chrono::high_resolution_clock::now();
+                        auto duration = end - start;
+                        auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
+                        duration -= hours;
+                        auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
+                        duration -= minutes;
+                        auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+                        print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
+                        exit(0);
+                    }
+                    print_time(); cout << "False Positive" << endl;
+                }
+                
+                starting_point = secp256k1->SubtractPoints(starting_point, stride_point);
+                stride_sum.Add(&stride);
+                
+                if (threadIdx == 0) {
+                    save_counter += 1;
+                    if (save_counter % 70000000 == 0) {
+                        cpub = secp256k1->GetPublicKeyHex(starting_point);
+                        ofstream outFile;
+                        outFile.open("settings2.txt");
+                        outFile << cpub <<'\n';
+                        outFile << stride_sum.GetBase10() << '\n';
+                        outFile.close();
+                        save_counter = 0;
+                        print_time(); cout << "Save Data written to settings2.txt" << endl;
+                    }
+                }
             }
+        };
+        
+        std::thread subtraction_Threads[n_cores];
+        for (int i = 0; i < n_cores; i++) {
+            subtraction_Threads[i] = std::thread(scalable_subtraction_search, starting_Points[i], i , offset_Nums[i], stride_sum);
+        }
+
+        for (int i = 0; i < n_cores; i++) {
+            subtraction_Threads[i].join();
         }
     };
     

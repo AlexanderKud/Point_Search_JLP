@@ -6,69 +6,14 @@
 #include <vector>
 #include <algorithm>
 #include <thread>
-#include <cmath>
 
 #include "secp256k1/SECP256k1.h"
 #include "secp256k1/Int.h"
 #include "bloom/filter.hpp"
-
+#include "util/util.h"
 
 using namespace std;
 namespace fs = filesystem;
-
-vector<string> get_files_in_directory(const string& directory_path) {
-    vector<string> files;
-    for (const auto& entry : fs::directory_iterator(directory_path)) {
-        if (entry.is_regular_file()) {
-            files.push_back(entry.path().filename().string());
-        }
-    }  
-    return files;
-}
-
-inline uint64_t str_to_uint64(std::string const& value) {
-  uint64_t result = 0;
-  size_t const length = value.size();
-  switch (length) {
-    case 20:    result += (value[length - 20] - '0') * 10000000000000000000ULL;
-    case 19:    result += (value[length - 19] - '0') * 1000000000000000000ULL;
-    case 18:    result += (value[length - 18] - '0') * 100000000000000000ULL;
-    case 17:    result += (value[length - 17] - '0') * 10000000000000000ULL;
-    case 16:    result += (value[length - 16] - '0') * 1000000000000000ULL;
-    case 15:    result += (value[length - 15] - '0') * 100000000000000ULL;
-    case 14:    result += (value[length - 14] - '0') * 10000000000000ULL;
-    case 13:    result += (value[length - 13] - '0') * 1000000000000ULL;
-    case 12:    result += (value[length - 12] - '0') * 100000000000ULL;
-    case 11:    result += (value[length - 11] - '0') * 10000000000ULL;
-    case 10:    result += (value[length - 10] - '0') * 1000000000ULL;
-    case  9:    result += (value[length -  9] - '0') * 100000000ULL;
-    case  8:    result += (value[length -  8] - '0') * 10000000ULL;
-    case  7:    result += (value[length -  7] - '0') * 1000000ULL;
-    case  6:    result += (value[length -  6] - '0') * 100000ULL;
-    case  5:    result += (value[length -  5] - '0') * 10000ULL;
-    case  4:    result += (value[length -  4] - '0') * 1000ULL;
-    case  3:    result += (value[length -  3] - '0') * 100ULL;
-    case  2:    result += (value[length -  2] - '0') * 10ULL;
-    case  1:    result += (value[length -  1] - '0');
-  }
-  return result;
-}
-
-std::string trim(const std::string& str) {
-    auto start = str.begin();
-    while (start != str.end() && std::isspace(*start)) ++start;
-    auto end = str.end();
-    do { --end; } while (end != start && std::isspace(*end));
-    return std::string(start, end + 1);
-}
-
-void print_time() {
-    time_t timestamp = time(NULL);
-    struct tm datetime = *localtime(&timestamp);
-    char output[50];
-    strftime(output, 50, "%H:%M:%S", &datetime);
-    cout << "[" << output << "] ";
-}
 
 auto main() -> int {
     
@@ -109,11 +54,9 @@ auto main() -> int {
     print_time(); cout << "Block Width: 2^" << block_width << endl;
     print_time(); cout << "Search Pub : " << search_pub << endl;
 
-    Point start_point, end_point, point_05, puzzle_point, puzzle_point_05, puzzle_point_divide2;
+    Point point_05, puzzle_point, puzzle_point_05, puzzle_point_divide2;
     Point first_point, second_point, P1, P2, Q1, Q2;
     Int stride_sum; stride_sum.SetInt32(0);
-    start_point = P_table[range_start];
-    end_point   = P_table[range_end];
     Int d_05, div2;
     d_05.SetBase10("57896044618658097711785492504343953926418782139537452191302581570759080747169");
     div2.SetBase10("2");
@@ -148,7 +91,7 @@ auto main() -> int {
     using filter = boost::bloom::filter<std::string, 32>;
     uint64_t n_elements = uint64_t(pow(2, block_width) * 1.0);
     double error = 0.0000000001;
-    int n_cores = 4; //actual number of processing cores but equal to some power of two value(2,4,8,16,32,64,...)
+    int n_cores = 4; //actual number of processing cores equal to some power of two value(2,4,8,16,32,64,...) divided by 2
     uint64_t count = uint64_t(pow(2, block_width) / n_cores);
     Int add_key; add_key.SetInt64(count);
     Point Add_Point = secp256k1->ScalarMultiplication(&add_key);
