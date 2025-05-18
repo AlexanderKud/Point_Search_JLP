@@ -3,7 +3,6 @@
 
 #include "Point.h"
 #include <string>
-#include <vector>
 
 class Secp256K1 {
 
@@ -27,7 +26,6 @@ public:
   Point AddPoints(Point &p1, Point &p2);
   Point Double(Point &p);
   Point DoublePoint(Point &p);
-  Point NegatePoint(Point &p);
   Point Subtract(Point &p1, Point &p2);
   Point SubtractPoints(Point &p1, Point &p2);
 

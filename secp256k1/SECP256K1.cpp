@@ -377,21 +377,14 @@ Point Secp256K1::Double(Point &p) {
   return r;
 }
 
-Point Secp256K1::NegatePoint(Point &p) {
-  Point Q;
-  Q.Clear();
-  Q.x.Set(&p.x);
-  Q.y.Set(&this->P);
-  Q.y.Sub(&p.y);
-  Q.z.SetInt32(1);
-  return Q;
-}
-
 Point Secp256K1::SubtractPoints(Point &p1, Point &p2) {
   Point Q1, Q2;
   Q1.Clear(); 
   Q2.Clear();
-  Q1 = NegatePoint(p2);
+  Q1.x.Set(&p2.x);
+  Q1.y.Set(&this->P);
+  Q1.y.Sub(&p2.y);
+  Q1.z.SetInt32(1);
   Q2 = AddPoints(p1, Q1);
   return Q2;
 }
