@@ -9,13 +9,14 @@
 
 #include "secp256k1/SECP256k1.h"
 #include "secp256k1/Int.h"
+#include "secp256k1/IntGroup.h"
 #include "bloom/filter.hpp"
 #include "util/util.h"
 
 using namespace std;
 namespace fs = filesystem;
 
-//static constexpr int POINTS_BATCH_SIZE = 1024; // TODO Batch addition with bulk inversion using IntGroup for speed-up
+static constexpr int POINTS_BATCH_SIZE = 1024; // Batch addition with bulk inversion(one ModInv for the entire group) using IntGroup class
 
 auto main() -> int {
     
@@ -102,6 +103,18 @@ auto main() -> int {
     Int add_key; add_key.SetInt64(count);
     Point Add_Point = secp256k1->ScalarMultiplication(&add_key); // helper point to calculate the starting points positions
     
+    Point addPoints[POINTS_BATCH_SIZE]; // array for batch addition points(1G .. 1024G)
+    addPoints[0] = secp256k1->G; // first point is G
+    Int bk; bk.SetInt32(2);
+    Point batch_Add = secp256k1->ScalarMultiplication(&bk); // start with point 2G
+    for (int i = 1; i < POINTS_BATCH_SIZE; i++) // filling in batch addition points array with points from(2G .. 1024G)
+    {
+        addPoints[i] = batch_Add;
+        batch_Add = secp256k1->AddPoints(batch_Add, secp256k1->G);
+    }
+    
+    int nbBatch = count / POINTS_BATCH_SIZE;
+    
     auto bloom_create1 = [&]() {
         string bloomfile = "bloom1.bf"; // bloomfilter for even case (1164->1288) 1289
         Point P(puzzle_point);
@@ -113,11 +126,53 @@ auto main() -> int {
 
         filter bf(n_elements, error);
         
-        auto process_chunk = [&](Point start_point) { // function for  a thread          
-            Point current = start_point;
-            for (uint64_t i = 0; i < count; i++) {
-                bf.insert(secp256k1->GetPublicKeyHex(current));
-                current = secp256k1->AddPoints(current, secp256k1->G);
+        auto process_chunk = [&](Point start_point) { // function for  a thread
+            
+            Int deltaX[POINTS_BATCH_SIZE];
+            IntGroup modGroup(POINTS_BATCH_SIZE);
+            Int pointBatchX[POINTS_BATCH_SIZE];
+            Int pointBatchY[POINTS_BATCH_SIZE];
+                      
+            Point startPoint = start_point;
+            bf.insert(secp256k1->GetPublicKeyHex(startPoint));
+
+            Point BloomP;
+            
+            for (int i = 0; i < nbBatch; i++) {
+                
+                for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
+                    deltaX[i].ModSub(&startPoint.x, &addPoints[i].x);
+                }
+    
+                modGroup.Set(deltaX);
+                modGroup.ModInv();
+                
+                Int deltaY, slope, slopeSquared;
+                
+                for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
+                    
+                    deltaY.ModSub(&startPoint.y, &addPoints[i].y);
+                    slope.ModMulK1(&deltaY, &deltaX[i]);
+                    slopeSquared.ModSquareK1(&slope);
+                    
+                    pointBatchX[i].ModSub(&slopeSquared, &startPoint.x);
+                    pointBatchX[i].ModSub(&pointBatchX[i], &addPoints[i].x);
+                    
+                    pointBatchY[i].ModSub(&startPoint.x, &pointBatchX[i]);
+                    pointBatchY[i].ModMulK1(&slope, &pointBatchY[i]);
+                    pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
+                }
+
+                for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
+                    BloomP.x.Set(&pointBatchX[i]);
+                    BloomP.y.Set(&pointBatchY[i]);
+                    BloomP.z.SetInt32(1);
+                    bf.insert(secp256k1->GetPublicKeyHex(BloomP));
+                }
+                
+                startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]);
+                startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]);
+                startPoint.z.SetInt32(1);
             }
         };
         
@@ -152,11 +207,53 @@ auto main() -> int {
         
         filter bf(n_elements, error);
         
-        auto process_chunk = [&](Point start_point) {  // function for  a thread          
-            Point current = start_point;
-            for (uint64_t i = 0; i < count; i++) {
-                bf.insert(secp256k1->GetPublicKeyHex(current));
-                current = secp256k1->AddPoints(current, secp256k1->G);
+        auto process_chunk = [&](Point start_point) {  // function for  a thread
+            
+            Int deltaX[POINTS_BATCH_SIZE];
+            IntGroup modGroup(POINTS_BATCH_SIZE);
+            Int pointBatchX[POINTS_BATCH_SIZE];
+            Int pointBatchY[POINTS_BATCH_SIZE];
+                      
+            Point startPoint = start_point;
+            bf.insert(secp256k1->GetPublicKeyHex(startPoint));
+            
+            Point BloomP;
+            
+            for (int i = 0; i < nbBatch; i++) {
+                
+                for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
+                    deltaX[i].ModSub(&startPoint.x, &addPoints[i].x);
+                }
+    
+                modGroup.Set(deltaX);
+                modGroup.ModInv();
+                
+                Int deltaY, slope, slopeSquared;
+                
+                for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
+                    
+                    deltaY.ModSub(&startPoint.y, &addPoints[i].y);
+                    slope.ModMulK1(&deltaY, &deltaX[i]);
+                    slopeSquared.ModSquareK1(&slope);
+                    
+                    pointBatchX[i].ModSub(&slopeSquared, &startPoint.x);
+                    pointBatchX[i].ModSub(&pointBatchX[i], &addPoints[i].x);
+                    
+                    pointBatchY[i].ModSub(&startPoint.x, &pointBatchX[i]);
+                    pointBatchY[i].ModMulK1(&slope, &pointBatchY[i]);
+                    pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
+                }
+
+                for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
+                    BloomP.x.Set(&pointBatchX[i]);
+                    BloomP.y.Set(&pointBatchY[i]);
+                    BloomP.z.SetInt32(1);
+                    bf.insert(secp256k1->GetPublicKeyHex(BloomP));
+                }
+                
+                startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]);
+                startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]);
+                startPoint.z.SetInt32(1);
             }
         };
         

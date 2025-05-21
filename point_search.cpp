@@ -163,10 +163,10 @@ auto main() -> int {
                     privkey.Mult(mult); // we got here the private key
                     calc_point = secp256k1->ScalarMultiplication(&privkey);
                     if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
-                        print_time(); cout << "Privatekey: " << privkey.GetBase16() << endl;
+                        print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
                         ofstream outFile;
                         outFile.open("found.txt", ios::app);
-                        outFile << privkey.GetBase16() << '\n';
+                        outFile << privkey.GetBase10() << '\n';
                         outFile.close();
                         auto end = std::chrono::high_resolution_clock::now();
                         auto duration = end - start;
@@ -208,10 +208,10 @@ auto main() -> int {
                     privkey.AddOne(); // we got here the private key
                     calc_point = secp256k1->ScalarMultiplication(&privkey);
                     if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
-                        print_time(); cout << "Privatekey: " << privkey.GetBase16() << endl;
+                        print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
                         ofstream outFile;
                         outFile.open("found.txt", ios::app);
-                        outFile << privkey.GetBase16() << '\n';
+                        outFile << privkey.GetBase10() << '\n';
                         outFile.close();
                         auto end = std::chrono::high_resolution_clock::now();
                         auto duration = end - start;
@@ -337,10 +337,10 @@ auto main() -> int {
                     privkey.Mult(mult); // we got here the private key
                     calc_point = secp256k1->ScalarMultiplication(&privkey);
                     if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
-                        print_time(); cout << "Privatekey: " << privkey.GetBase16() << endl;
+                        print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
                         ofstream outFile;
                         outFile.open("found.txt", ios::app);
-                        outFile << privkey.GetBase16() << '\n';
+                        outFile << privkey.GetBase10() << '\n';
                         outFile.close();
                         auto end = std::chrono::high_resolution_clock::now();
                         auto duration = end - start;
@@ -382,10 +382,10 @@ auto main() -> int {
                     privkey.AddOne(); // we got here the private key
                     calc_point = secp256k1->ScalarMultiplication(&privkey);
                     if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
-                        print_time(); cout << "Privatekey: " << privkey.GetBase16() << endl;
+                        print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
                         ofstream outFile;
                         outFile.open("found.txt", ios::app);
-                        outFile << privkey.GetBase16() << '\n';
+                        outFile << privkey.GetBase10() << '\n';
                         outFile.close();
                         auto end = std::chrono::high_resolution_clock::now();
                         auto duration = end - start;

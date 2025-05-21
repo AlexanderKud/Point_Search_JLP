@@ -31,12 +31,17 @@ Requires C/C++ GMP Library to be installed. <a href="https://gmplib.org">https:/
 
 
 ./generate_bloom uses multiple threads to fill in the bloomfilter binary.
+now has point batch addition implemented.
+SPECIAL THANKS TO NoMachine for his code draft!!!
 to split the space evenly number of cores needs to be some power of two value.
 actual number of processing cores but equal to some power of two value(2,4,8,16,32,64,...)
 divided by 2
 actual cores = 8  8 / 2 = 4 cores
 
 ./point_search is totally scalable and has no such restriction.
-can set any desirable number of cores to use.
+can set any desirable number of cores to use but divided by 2.
+because we have two search paths : addition and subtraction.
+setting cores beyond hardware concurrency will not yield any additional performance.
+TODO: point batch addition with bulk inversion to make things faster.
 
 </pre>
