@@ -59,7 +59,7 @@ auto main() -> int {
 
     Point point_05, puzzle_point, puzzle_point_05, puzzle_point_divide2; // calculation starting point
     Point first_point, second_point, P1, P2, Q1, Q2;                     // take 2^10 .. 2^11 range for example
-    Int stride_sum; stride_sum.SetInt32(0); // value to keep travelled distance intial value = 0
+    Int stride_sum; stride_sum.SetInt32(0); // value to keep travelled distance
     Int d_05, div2;
     d_05.SetBase10("57896044618658097711785492504343953926418782139537452191302581570759080747169");
     div2.SetInt32(2);
@@ -101,7 +101,7 @@ auto main() -> int {
     int n_cores = 4; //actual number of processing cores equal to some power of two value(2,4,8,16,32,64,...) divided by 2
     uint64_t count = uint64_t(pow(2, block_width) / n_cores); // elements per thread
     Int add_key; add_key.SetInt64(count);
-    Point Add_Point = secp256k1->ScalarMultiplication(&add_key); // helper point to calculate the starting points positions
+    Point Add_Point = secp256k1->ScalarMultiplication(&add_key); // helper point to calculate the starting points
     
     Point addPoints[POINTS_BATCH_SIZE]; // array for batch addition points(1G .. 1024G)
     addPoints[0] = secp256k1->G; // first point is G
@@ -113,7 +113,7 @@ auto main() -> int {
         batch_Add = secp256k1->AddPoints(batch_Add, secp256k1->G);
     }
     
-    int nbBatch = count / POINTS_BATCH_SIZE;
+    int nbBatch = count / POINTS_BATCH_SIZE; // number of batches for single thread
     
     auto bloom_create1 = [&]() {
         string bloomfile = "bloom1.bf"; // bloomfilter for even case (1164->1288) 1289
@@ -128,27 +128,27 @@ auto main() -> int {
         
         auto process_chunk = [&](Point start_point) { // function for  a thread
             
-            Int deltaX[POINTS_BATCH_SIZE];
-            IntGroup modGroup(POINTS_BATCH_SIZE);
-            Int pointBatchX[POINTS_BATCH_SIZE];
-            Int pointBatchY[POINTS_BATCH_SIZE];
+            Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
+            IntGroup modGroup(POINTS_BATCH_SIZE); // group of (x1 - x2) set for batch inversion
+            Int pointBatchX[POINTS_BATCH_SIZE]; // X coordinates of the batch
+            Int pointBatchY[POINTS_BATCH_SIZE]; // Y coordinates of the batch
                       
-            Point startPoint = start_point;
-            bf.insert(secp256k1->GetPublicKeyHex(startPoint));
+            Point startPoint = start_point; // start point
+            bf.insert(secp256k1->GetPublicKeyHex(startPoint)); // we insert it instantly into the bloomfilter
 
-            Point BloomP;
-            Int deltaY, slope, slopeSquared;
+            Point BloomP; // point for insertion of the batch into the bloomfilter
+            Int deltaY, slope, slopeSquared; // values to store result in points addition formula
             
             for (int i = 0; i < nbBatch; i++) {
                 
-                for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
-                    deltaX[i].ModSub(&startPoint.x, &addPoints[i].x);
+                for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // we compute (x1 - x2)
+                    deltaX[i].ModSub(&startPoint.x, &addPoints[i].x); // insert each into deltaX array
                 }
     
-                modGroup.Set(deltaX);
-                modGroup.ModInv();
+                modGroup.Set(deltaX); // we set array deltaX to modGroup for batch inversion
+                modGroup.ModInv();    // doing batch inversion
                 
-                for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
+                for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // going hand in hand with points addition formula
                     
                     deltaY.ModSub(&startPoint.y, &addPoints[i].y);
                     slope.ModMulK1(&deltaY, &deltaX[i]);
@@ -162,14 +162,14 @@ auto main() -> int {
                     pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
                 }
 
-                for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
+                for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points into the bloomfilter
                     BloomP.x.Set(&pointBatchX[i]);
                     BloomP.y.Set(&pointBatchY[i]);
                     BloomP.z.SetInt32(1);
                     bf.insert(secp256k1->GetPublicKeyHex(BloomP));
                 }
                 
-                startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]);
+                startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]); // setting new startPoint
                 startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]);
                 startPoint.z.SetInt32(1);
             }
@@ -208,27 +208,27 @@ auto main() -> int {
         
         auto process_chunk = [&](Point start_point) {  // function for  a thread
             
-            Int deltaX[POINTS_BATCH_SIZE];
-            IntGroup modGroup(POINTS_BATCH_SIZE);
-            Int pointBatchX[POINTS_BATCH_SIZE];
-            Int pointBatchY[POINTS_BATCH_SIZE];
+            Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
+            IntGroup modGroup(POINTS_BATCH_SIZE); // group of (x1 - x2) set for batch inversion
+            Int pointBatchX[POINTS_BATCH_SIZE]; // X coordinates of the batch
+            Int pointBatchY[POINTS_BATCH_SIZE]; // Y coordinates of the batch
                       
-            Point startPoint = start_point;
-            bf.insert(secp256k1->GetPublicKeyHex(startPoint));
+            Point startPoint = start_point;  // start point
+            bf.insert(secp256k1->GetPublicKeyHex(startPoint)); // we insert it instantly into the bloomfilter
             
-            Point BloomP;
-            Int deltaY, slope, slopeSquared;
+            Point BloomP; // point for insertion of the batch into the bloomfilter
+            Int deltaY, slope, slopeSquared; // values to store result in points addition formula
             
             for (int i = 0; i < nbBatch; i++) {
                 
-                for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
-                    deltaX[i].ModSub(&startPoint.x, &addPoints[i].x);
+                for (int i = 0; i < POINTS_BATCH_SIZE; i++) {         // we compute (x1 - x2)
+                    deltaX[i].ModSub(&startPoint.x, &addPoints[i].x); // insert each into deltaX array
                 }
     
-                modGroup.Set(deltaX);
-                modGroup.ModInv();
+                modGroup.Set(deltaX); // we set array deltaX to modGroup for batch inversion
+                modGroup.ModInv();    // doing batch inversion
                 
-                for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
+                for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // going hand in hand with points addition formula
                     
                     deltaY.ModSub(&startPoint.y, &addPoints[i].y);
                     slope.ModMulK1(&deltaY, &deltaX[i]);
@@ -242,14 +242,14 @@ auto main() -> int {
                     pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
                 }
 
-                for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
+                for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points into the bloomfilter
                     BloomP.x.Set(&pointBatchX[i]);
                     BloomP.y.Set(&pointBatchY[i]);
                     BloomP.z.SetInt32(1);
                     bf.insert(secp256k1->GetPublicKeyHex(BloomP));
                 }
                 
-                startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]);
+                startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]); // setting new startPoint
                 startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]);
                 startPoint.z.SetInt32(1);
             }
