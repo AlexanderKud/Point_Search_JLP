@@ -137,6 +137,7 @@ auto main() -> int {
             bf.insert(secp256k1->GetPublicKeyHex(startPoint));
 
             Point BloomP;
+            Int deltaY, slope, slopeSquared;
             
             for (int i = 0; i < nbBatch; i++) {
                 
@@ -146,8 +147,6 @@ auto main() -> int {
     
                 modGroup.Set(deltaX);
                 modGroup.ModInv();
-                
-                Int deltaY, slope, slopeSquared;
                 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
                     
@@ -218,6 +217,7 @@ auto main() -> int {
             bf.insert(secp256k1->GetPublicKeyHex(startPoint));
             
             Point BloomP;
+            Int deltaY, slope, slopeSquared;
             
             for (int i = 0; i < nbBatch; i++) {
                 
@@ -227,8 +227,6 @@ auto main() -> int {
     
                 modGroup.Set(deltaX);
                 modGroup.ModInv();
-                
-                Int deltaY, slope, slopeSquared;
                 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
                     
