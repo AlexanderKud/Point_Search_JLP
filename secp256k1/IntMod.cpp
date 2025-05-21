@@ -75,8 +75,8 @@ void Int::ModSub(uint64_t a) {
 
 // ------------------------------------------------
 
-void Int::ModSub(Int *a,Int *b) {
-  Sub(a,b);
+void Int::ModSub(Int *a, Int *b) {
+  Sub(a, b);
   if (IsNegative())
     Add(&Field_P);
 }

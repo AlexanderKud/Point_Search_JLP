@@ -326,7 +326,7 @@ void Int::SetQWord(int n, uint64_t b) {
 
 // ------------------------------------------------
 
-void Int::Sub(Int *a) {
+void Int:: Sub(Int *a) {
 
   unsigned char c = 0;
   c = _subborrow_u64(c, bits64[0], a->bits64[0], bits64 +0);

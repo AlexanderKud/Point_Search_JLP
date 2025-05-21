@@ -145,24 +145,20 @@ std::string Secp256K1::GetPublicKeyHex(Point &pubKey) {
 
 Point Secp256K1::AddPoints(Point &p1,Point &p2) {
 
-  Int _s;
-  Int _p;
-  Int dy;
-  Int dx;
+  Int _s, dx, dy;
   Point r;
   r.z.SetInt32(1);
 
-  dy.ModSub(&p2.y,&p1.y);
-  dx.ModSub(&p2.x,&p1.x);
+  dy.ModSub(&p2.y, &p1.y);
+  dx.ModSub(&p2.x, &p1.x);
   dx.ModInv();
-  _s.ModMulK1(&dy,&dx);     // s = (p2.y-p1.y)*inverse(p2.x-p1.x);
+  _s.ModMulK1(&dy, &dx);     // s = (p2.y-p1.y)*inverse(p2.x-p1.x);
 
-  _p.ModSquareK1(&_s);       // _p = pow2(s)
-
-  r.x.ModSub(&_p,&p1.x);
+  r.x.ModSquareK1(&_s);       // _p = pow2(s)
+  r.x.ModSub(&p1.x);
   r.x.ModSub(&p2.x);       // rx = pow2(s) - p1.x - p2.x;
 
-  r.y.ModSub(&p2.x,&r.x);
+  r.y.ModSub(&p2.x, &r.x);
   r.y.ModMulK1(&_s);
   r.y.ModSub(&p2.y);       // ry = - p2.y - s*(ret.x-p2.x);
 
@@ -379,11 +375,8 @@ Point Secp256K1::Double(Point &p) {
 
 Point Secp256K1::SubtractPoints(Point &p1, Point &p2) {
   Point Q1, Q2;
-  Q1.Clear(); 
-  Q2.Clear();
-  Q1.x.Set(&p2.x);
-  Q1.y.Set(&this->P);
-  Q1.y.Sub(&p2.y);
+  Q1.Set(p2);
+  Q1.y.ModNeg();
   Q1.z.SetInt32(1);
   Q2 = AddPoints(p1, Q1);
   return Q2;
