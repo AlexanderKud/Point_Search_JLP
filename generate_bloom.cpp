@@ -16,7 +16,7 @@
 using namespace std;
 namespace fs = filesystem;
 
-static constexpr int POINTS_BATCH_SIZE = 1024; // Batch addition with bulk inversion(one ModInv for the entire group) using IntGroup class
+static constexpr int POINTS_BATCH_SIZE = 1024; // Batch addition with batch inversion(one ModInv for the entire group) using IntGroup class
 
 auto main() -> int {
     
@@ -26,8 +26,8 @@ auto main() -> int {
     fs::path current_path = fs::current_path(); // deleting previous settings and bloom files
     auto file_list = get_files_in_directory(current_path);
     vector<string> targets = {"settings1.txt", "settings2.txt", "bloom1.bf", "bloom2.bf"};
-    for (auto i : file_list) {
-        for (auto t : targets) {
+    for (auto& i : file_list) {
+        for (auto& t : targets) {
             if (i == t) { std::remove(t.c_str()); }
         }
     }
@@ -104,13 +104,13 @@ auto main() -> int {
     Point Add_Point = secp256k1->ScalarMultiplication(&add_key); // helper point to calculate the starting points
     
     Point addPoints[POINTS_BATCH_SIZE]; // array for batch addition points(1G .. 1024G)
-    addPoints[0] = secp256k1->G; // first point is G
-    Int bk; bk.SetInt32(2);
-    Point batch_Add = secp256k1->ScalarMultiplication(&bk); // start with point 2G
-    for (int i = 1; i < POINTS_BATCH_SIZE; i++) // filling in batch addition points array with points from(2G .. 1024G)
+    Point batch_Add = secp256k1->DoublePoint(secp256k1->G); //2G
+    addPoints[0] = secp256k1->G; // 1G
+    addPoints[1] = batch_Add;    // 2G
+    for (int i = 2; i < POINTS_BATCH_SIZE; i++) // filling in batch addition points array with points from(3G .. 1024G)
     {
-        addPoints[i] = batch_Add;
         batch_Add = secp256k1->AddPoints(batch_Add, secp256k1->G);
+        addPoints[i] = batch_Add;
     }
     
     int nbBatch = count / POINTS_BATCH_SIZE; // number of batches for single thread
@@ -126,7 +126,7 @@ auto main() -> int {
 
         filter bf(n_elements, error);
         
-        auto process_chunk = [&](Point start_point) { // function for  a thread
+        auto process_chunk = [&](Point start_point) { // function for a thread
             
             Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
             IntGroup modGroup(POINTS_BATCH_SIZE); // group of (x1 - x2) set for batch inversion
@@ -141,8 +141,8 @@ auto main() -> int {
             
             for (int i = 0; i < nbBatch; i++) {
                 
-                for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // we compute (x1 - x2)
-                    deltaX[i].ModSub(&startPoint.x, &addPoints[i].x); // insert each into deltaX array
+                for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // we compute (x1 - x2) for the entire batch
+                    deltaX[i].ModSub(&startPoint.x, &addPoints[i].x); // insert each instance into the deltaX array
                 }
     
                 modGroup.Set(deltaX); // we set array deltaX to modGroup for batch inversion
@@ -206,7 +206,7 @@ auto main() -> int {
         
         filter bf(n_elements, error);
         
-        auto process_chunk = [&](Point start_point) {  // function for  a thread
+        auto process_chunk = [&](Point start_point) {  // function for a thread
             
             Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
             IntGroup modGroup(POINTS_BATCH_SIZE); // group of (x1 - x2) set for batch inversion
@@ -221,8 +221,8 @@ auto main() -> int {
             
             for (int i = 0; i < nbBatch; i++) {
                 
-                for (int i = 0; i < POINTS_BATCH_SIZE; i++) {         // we compute (x1 - x2)
-                    deltaX[i].ModSub(&startPoint.x, &addPoints[i].x); // insert each into deltaX array
+                for (int i = 0; i < POINTS_BATCH_SIZE; i++) {         // we compute (x1 - x2) for the entire batch
+                    deltaX[i].ModSub(&startPoint.x, &addPoints[i].x); // insert each instance into the deltaX array
                 }
     
                 modGroup.Set(deltaX); // we set array deltaX to modGroup for batch inversion
