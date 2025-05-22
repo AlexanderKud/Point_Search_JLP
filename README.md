@@ -2,37 +2,50 @@
 Requires C++ Boost Library to be installed. <a href="https://www.boost.org">https://www.boost.org</a>
 Requires C/C++ GMP Library to be installed. <a href="https://gmplib.org">https://gmplib.org</a>
   
-[alexander@alexander-home Point_Search_GMP]$ ./generate_bloom
-[16:15:29] P_table generated
-[16:15:29] Range Start: 59 bits
-[16:15:29] Range End  : 60 bits
-[16:15:29] Block Width: 2^30
-[16:15:29] Search Pub : 038943e72e428a154da75a6ccd0c32118bdf2bfa54077171a24b7418770d276291
-[16:15:29] Settings written to file
-[16:15:31] Creating BloomFile1 with 4 threads
-[16:15:31] Creating BloomFile2 with 4 threads
-[16:48:25] Writing BloomFile1 to bloom1.bf
-[16:48:26] Writing BloomFile2 to bloom2.bf
-[16:49:38] Elapsed time: (0)hours (34)minutes (9)seconds
+[alexander@alexander-home Point_Search_JLP]$ ./generate_bloom
+[21:48:59] P_table generated
+[21:48:59] Range Start: 54 bits
+[21:48:59] Range End  : 55 bits
+[21:48:59] Block Width: 2^26
+[21:48:59] Search Pub : 03a5f9c69423c70c64fe162af3936014c1346978dccd681fa06a18edaa24e3f7d5
+[21:48:59] Settings written to file
+[21:48:59] Creating bloom2 image with 4 threads
+[21:48:59] Creating bloom1 image with 4 threads
+[21:50:53] Writing bloom1 image to bloom1.bf
+[21:50:54] Writing bloom2 image to bloom2.bf
+[21:50:54] Elapsed time: (0)hours (1)minutes (55)seconds
 
 
-[alexander@alexander-home Point_Search_GMP]$ ./point_search
-[16:53:31] S_table generated
-[16:53:31] Range Start: 59 bits
-[16:53:31] Range End  : 60 bits
-[16:53:31] Block Width: 2^30
-[16:53:31] Search Pub : 038943e72e428a154da75a6ccd0c32118bdf2bfa54077171a24b7418770d276291
-[16:53:31] Loading Bloomfilter bloom1.bf
-[16:53:34] Loading Bloomfilter bloom2.bf
-[16:53:37] Search in progress...
-[16:53:49] BloomFilter Hit bloom2.bf (Odd Point) [Lower Range Half]
-[16:53:49] Privatekey: 0000000000000000000000000000000000000000000000000bf2c3a1a8fea11f
-[16:53:49] Elapsed time: (0)hours (0)minutes (11)seconds
+[alexander@alexander-home Point_Search_JLP]$ ./point_search
+[21:51:09] S_table generated
+[21:51:09] Range Start: 54 bits
+[21:51:09] Range End  : 55 bits
+[21:51:09] Block Width: 2^26
+[21:51:09] Search Pub : 03a5f9c69423c70c64fe162af3936014c1346978dccd681fa06a18edaa24e3f7d5
+[21:51:09] Loading Bloomfilter bloom1.bf
+[21:51:09] Loading Bloomfilter bloom2.bf
+[21:51:09] Search in progress...
+[21:51:53] BloomFilter Hit bloom2.bf (Odd Point) [Higher Range Half]
+[21:51:53] Privatekey: 29831168849479125
+[21:51:53] Elapsed time: (0)hours (0)minutes (44)seconds
 
+[alexander@alexander-home Point_Search_JLP]$ ./point_search_batch
+[21:51:58] S_table generated
+[21:51:58] Range Start: 54 bits
+[21:51:58] Range End  : 55 bits
+[21:51:58] Block Width: 2^26
+[21:51:58] Search Pub : 03a5f9c69423c70c64fe162af3936014c1346978dccd681fa06a18edaa24e3f7d5
+[21:51:58] Loading Bloomfilter bloom1.bf
+[21:51:58] Loading Bloomfilter bloom2.bf
+[21:51:59] Search in progress...
+[21:52:25] BloomFilter Hit bloom2.bf (Odd Point) [Higher Range Half]
+[21:52:25] Privatekey: 29831168849479125
+[21:52:25] Elapsed time: (0)hours (0)minutes (26)seconds
+
+Point batch addition with batch inversion under the hood.
+SPECIAL THANKS TO NoMachine for his code draft!!!
 
 ./generate_bloom uses multiple threads to fill in the bloomfilter binary.
-now has point batch addition implemented.
-SPECIAL THANKS TO NoMachine for his code draft!!!
 to split the space evenly, number of cores needs to be some power of two value.
 actual number of processing cores but equal to some power of two value(2,4,8,16,32,64,...)
 divided by 2
@@ -42,6 +55,5 @@ actual cores = 8  8 / 2 = 4 cores
 can set any desirable number of cores to use but divided by 2.
 because we have two search paths : addition and subtraction.
 setting cores beyond hardware concurrency will not yield any additional performance.
-TODO: point batch addition with bulk inversion to make things faster.
 
 </pre>
