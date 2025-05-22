@@ -104,7 +104,7 @@ auto main() -> int {
     Point Add_Point = secp256k1->ScalarMultiplication(&add_key); // helper point to calculate the starting points
     
     Point addPoints[POINTS_BATCH_SIZE]; // array for the batch addition points(1G .. 1024G)
-    Point batch_Add = secp256k1->DoublePoint(secp256k1->G); //2G
+    Point batch_Add = secp256k1->DoublePoint(secp256k1->G); // 2G
     addPoints[0] = secp256k1->G; // 1G
     addPoints[1] = batch_Add;    // 2G
     for (int i = 2; i < POINTS_BATCH_SIZE; i++) // filling in the batch addition points array with points from(3G .. 1024G)
