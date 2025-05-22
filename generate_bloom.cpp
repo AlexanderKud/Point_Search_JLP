@@ -64,7 +64,7 @@ auto main() -> int {
     d_05.SetBase10("57896044618658097711785492504343953926418782139537452191302581570759080747169");
     div2.SetInt32(2);
     point_05 = secp256k1->ScalarMultiplication(&d_05); // multiplicative inverse of 2 mod N (0.5)
-    puzzle_point = secp256k1->ParsePublicKeyHex(search_pub); // 1288 point for example
+    puzzle_point = secp256k1->ParsePublicKeyHex(search_pub); // 1288 1289 points for example
     puzzle_point_05 = secp256k1->AddPoints(puzzle_point, point_05); // 1288 + 0.5 = 1288.5
                                                                     // 1289 + 0.5 = 1289.5
     puzzle_point_divide2 = secp256k1->PointDivision(puzzle_point, &div2); // 1288 : 2 = 644
