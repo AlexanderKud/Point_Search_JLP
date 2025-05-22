@@ -229,7 +229,7 @@ auto main() -> int {
                 starting_point = secp256k1->AddPoints(starting_point, stride_point);
                 stride_sum.Add(&stride);
                 
-                if (threadIdx == 0) {  // thread with index one is used to save the progress
+                if (threadIdx == 0) {  // thread with index 0 is used to save the progress
                     save_counter += 1; // all values are derived from this data after new program start
                     if (save_counter % 70000000 == 0) {
                         cpub = secp256k1->GetPublicKeyHex(starting_point);
@@ -403,7 +403,7 @@ auto main() -> int {
                 starting_point = secp256k1->SubtractPoints(starting_point, stride_point);
                 stride_sum.Add(&stride);
                 
-                if (threadIdx == 0) {  // thread with index one is used to save the progress
+                if (threadIdx == 0) {  // thread with index 0 is used to save the progress
                     save_counter += 1; // all values are derived from this data after new program start
                     if (save_counter % 70000000 == 0) {
                         cpub = secp256k1->GetPublicKeyHex(starting_point);
