@@ -197,7 +197,7 @@ auto main() -> int {
 
     auto bloom_create2 = [&]() {
         string bloomfile = "bloom2.bf"; // bloomfilter for odd case  (1164.5->1289.5) [1289.5 + block_width] will hit
-        Point P(puzzle_point_05);                                 // (1164->1288,5)   [1288,5 + block_width] will not hit
+        Point P(puzzle_point_05);                                 // (1164->1288.5)   [1288.5 + block_width] will not hit
         vector<Point> starting_points;
         for (int i = 0; i < n_cores; i++) { // calculating the starting points 
             starting_points.push_back(P);
