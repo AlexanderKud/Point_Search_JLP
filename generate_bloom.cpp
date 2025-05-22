@@ -104,7 +104,7 @@ auto main() -> int {
     Point Add_Point = secp256k1->ScalarMultiplication(&add_key); // helper point to calculate the starting points
     
     Point addPoints[POINTS_BATCH_SIZE]; // array for the batch addition points(1G .. 1024G)
-    Point batch_Add = secp256k1->DoublePoint(secp256k1->G); //2G
+    Point batch_Add = secp256k1->DoublePoint(secp256k1->G); // 2G
     addPoints[0] = secp256k1->G; // 1G
     addPoints[1] = batch_Add;    // 2G
     for (int i = 2; i < POINTS_BATCH_SIZE; i++) // filling in the batch addition points array with points from(3G .. 1024G)
@@ -116,8 +116,8 @@ auto main() -> int {
     int nbBatch = count / POINTS_BATCH_SIZE; // number of batches for the single thread
     
     auto bloom_create1 = [&]() {
-        string bloomfile = "bloom1.bf"; // bloomfilter for even case (1164->1288) 1289 [1288 + block_width]
-        Point P(puzzle_point);
+        string bloomfile = "bloom1.bf"; // bloomfilter for even case (1164->1288)   [1288 + block_width] will hit
+        Point P(puzzle_point);                                   //  (1164.5->1289) [1289 + block_width] will not hit
         vector<Point> starting_points;
         for (int i = 0; i < n_cores; i++) { // calculating the starting points 
             starting_points.push_back(P);
@@ -196,8 +196,8 @@ auto main() -> int {
     };
 
     auto bloom_create2 = [&]() {
-        string bloomfile = "bloom2.bf"; // bloomfilter for odd case 1288,5 (1164.5->1289.5) [1289.5 + block_width]
-        Point P(puzzle_point_05);
+        string bloomfile = "bloom2.bf"; // bloomfilter for odd case  (1164.5->1289.5) [1289.5 + block_width] will hit
+        Point P(puzzle_point_05);                                 // (1164->1288,5)   [1288,5 + block_width] will not hit
         vector<Point> starting_points;
         for (int i = 0; i < n_cores; i++) { // calculating the starting points 
             starting_points.push_back(P);
@@ -229,7 +229,7 @@ auto main() -> int {
                 modGroup.ModInv();    // doing batch inversion
                 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // follow points addition formula logic
-                    
+
                     deltaY.ModSub(&startPoint.y, &addPoints[i].y);
                     slope.ModMulK1(&deltaY, &deltaX[i]);
                     
