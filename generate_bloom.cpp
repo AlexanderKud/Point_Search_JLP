@@ -66,23 +66,23 @@ auto main() -> int {
     point_05 = secp256k1->ScalarMultiplication(&d_05); // multiplicative inverse of 2 mod N (0.5)
     puzzle_point = secp256k1->ParsePublicKeyHex(search_pub); // 1288 point for example
     puzzle_point_05 = secp256k1->AddPoints(puzzle_point, point_05); // 1288 + 0.5 = 1288.5
-
+                                                                    // 1289 + 0.5 = 1289.5
     puzzle_point_divide2 = secp256k1->PointDivision(puzzle_point, &div2); // 1288 : 2 = 644
-
+                                                                          // 1289 : 2 = 644.5
     first_point  = P_table[range_start - 1]; // 512
     second_point = P_table[range_start - 2]; // 256
 
-    P1 = secp256k1->SubtractPoints(puzzle_point_divide2, first_point); // 644 - 512 = 132
-    P2 = secp256k1->SubtractPoints(puzzle_point_divide2, second_point);// 644 - 256 = 388
-    Q1 = secp256k1->AddPoints(P1, P2);                                 // 132 + 388 = 520
-    Q2 = secp256k1->AddPoints(puzzle_point_divide2, Q1);               // 644 + 520 = 1164 (point 1164)
+    P1 = secp256k1->SubtractPoints(puzzle_point_divide2, first_point); // 644 - 512 = 132  644.5 - 512 = 132.5
+    P2 = secp256k1->SubtractPoints(puzzle_point_divide2, second_point);// 644 - 256 = 388  644.5 - 256 = 388.5
+    Q1 = secp256k1->AddPoints(P1, P2);                                 // 132 + 388 = 520  132.5 + 388.5 = 521
+    Q2 = secp256k1->AddPoints(puzzle_point_divide2, Q1);               // 644 + 520 = 1164 (point 1164)  644.5 + 521 = 1165.5
                                                                        // if the puzzle point is in the lower range half
     string s1, s2;                                                     // the calculated point will behind it 1164 - > 1288(addition_search)
     s1 = secp256k1->GetPublicKeyHex(Q2);                               // if the puzzle point is in the higher range half 1784
     s2 = stride_sum.GetBase10();                                       // the calculated point will be ahead of it
                                                                        // 1784 < - 1908 (subtraction_search)
     ofstream outFile1;                        // writing settings to files
-    outFile1.open("settings1.txt", ios::app);                          // for odd number 1289 the point will be 1164.5
+    outFile1.open("settings1.txt", ios::app);                          // for odd number 1289 the point will be 1165.5
     outFile1 << s1 <<'\n';                                             // that is why two bloomfilters are used
     outFile1 << s2 << '\n';
     outFile1.close();
@@ -117,7 +117,7 @@ auto main() -> int {
     
     auto bloom_create1 = [&]() {
         string bloomfile = "bloom1.bf"; // bloomfilter for even case (1164->1288)   [1288 + block_width] will hit
-        Point P(puzzle_point);                                   //  (1164.5->1289) [1289 + block_width] will not hit
+        Point P(puzzle_point);                                   //  (1165.5->1289) [1289 + block_width] will not hit
         vector<Point> starting_points;
         for (int i = 0; i < n_cores; i++) { // calculating the starting points 
             starting_points.push_back(P);
@@ -196,7 +196,7 @@ auto main() -> int {
     };
 
     auto bloom_create2 = [&]() {
-        string bloomfile = "bloom2.bf"; // bloomfilter for odd case  (1164.5->1289.5) [1289.5 + block_width] will hit
+        string bloomfile = "bloom2.bf"; // bloomfilter for odd case  (1165.5->1289.5) [1289.5 + block_width] will hit
         Point P(puzzle_point_05);                                 // (1164->1288.5)   [1288.5 + block_width] will not hit
         vector<Point> starting_points;
         for (int i = 0; i < n_cores; i++) { // calculating the starting points 
