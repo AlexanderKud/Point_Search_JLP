@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 #include <thread>
+#include <mutex>
 
 #include "secp256k1/SECP256k1.h"
 #include "secp256k1/Int.h"
@@ -128,6 +129,7 @@ auto main() -> int {
         
         auto process_chunk = [&](Point start_point) { // function for a thread
             
+            mutex mtx;
             Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
             IntGroup modGroup(POINTS_BATCH_SIZE); // group of deltaX (x1 - x2) set for batch inversion
             Int pointBatchX[POINTS_BATCH_SIZE]; // X coordinates of the batch
@@ -161,13 +163,15 @@ auto main() -> int {
                     pointBatchY[i].ModMulK1(&slope, &pointBatchY[i]);
                     pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
                 }
-
+                
+                mtx.lock();
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points into the bloomfilter
                     BloomP.x.Set(&pointBatchX[i]);
                     BloomP.y.Set(&pointBatchY[i]);
                     BloomP.z.SetInt32(1);
                     bf.insert(secp256k1->GetPublicKeyHex(BloomP));
                 }
+                mtx.unlock();
                 
                 startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]); // setting the new startPoint for the next batch iteration
                 startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]);
@@ -208,6 +212,7 @@ auto main() -> int {
         
         auto process_chunk = [&](Point start_point) {  // function for a thread
             
+            mutex mtx;
             Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
             IntGroup modGroup(POINTS_BATCH_SIZE); // group of deltaX (x1 - x2) set for batch inversion
             Int pointBatchX[POINTS_BATCH_SIZE]; // X coordinates of the batch
@@ -241,13 +246,15 @@ auto main() -> int {
                     pointBatchY[i].ModMulK1(&slope, &pointBatchY[i]);
                     pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
                 }
-
+                
+                mtx.lock();
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points into the bloomfilter
                     BloomP.x.Set(&pointBatchX[i]);
                     BloomP.y.Set(&pointBatchY[i]);
                     BloomP.z.SetInt32(1);
                     bf.insert(secp256k1->GetPublicKeyHex(BloomP));
                 }
+                mtx.unlock();
                 
                 startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]); // setting the new startPoint for the next batch iteration
                 startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]);
