@@ -43,7 +43,9 @@ Requires C/C++ GMP Library to be installed. <a href="https://gmplib.org">https:/
 [21:52:25] Elapsed time: (0)hours (0)minutes (26)seconds
 
 Point batch addition with batch inversion under the hood.
-SPECIAL THANKS TO NoMachine for his code draft!!!
+Special thanks to NoMachine for his code draft!!!
+
+Special thanks to kTimesG(https://github.com/kTimesG) for mutex use improvement proposal.
 
 ./generate_bloom uses multiple threads to fill in the bloomfilter binary.
 to split the space evenly, number of cores needs to be some power of two value.
