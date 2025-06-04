@@ -98,7 +98,7 @@ auto main() -> int {
     
     using filter = boost::bloom::filter<std::string, 32>; // bloomfilter settings
     uint64_t n_elements = uint64_t(pow(2, block_width));  // number of elements == 2^block_width
-    double error = 0.000000001; // errror rate for bloomfilter
+    double error = 0.0000000001; // errror rate for bloomfilter
     int n_cores = 4; //actual number of processing cores equal to some power of two value(2,4,8,16,32,64,...) divided by 2
     uint64_t count = uint64_t(pow(2, block_width) / n_cores); // elements per thread
     Int add_key; add_key.SetInt64(count);
