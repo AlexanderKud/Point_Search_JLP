@@ -27,7 +27,7 @@ auto main() -> int {
     
     auto start = std::chrono::high_resolution_clock::now();    // starting the timer
     Secp256K1* secp256k1 = new Secp256K1(); secp256k1->Init(); // initializing secp256k1 context
-    int xC_len = 14; //X coordinate length to be checked for being inserted into the bloomfilter (should be the same for generate_bloom and point_search max=33(full length X coordinate))
+    int xC_len = 14; //X coordinate length to be inserted into the bloomfilter (should be the same for generate_bloom and point_search max=33(full length X coordinate))
     
     fs::path current_path = fs::current_path(); // deleting previous settings and bloom files
     auto file_list = get_files_in_directory(current_path);
