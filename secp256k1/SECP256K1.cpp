@@ -143,6 +143,19 @@ std::string Secp256K1::GetPublicKeyHex(Point &pubKey) {
   return ret;
 }
 
+std::string Secp256K1::GetXHex(Int* x, int length) {
+  unsigned char publicKeyBytes[33];
+  char tmp[3];
+  std::string ret;
+  x->Get32Bytes(publicKeyBytes);
+  for (int i = 1; i < length; i++) {
+    sprintf(tmp, "%02x", (int)publicKeyBytes[i]);
+    ret.append(tmp);
+  }
+
+  return ret;
+}
+
 Point Secp256K1::AddPoints(Point &p1,Point &p2) {
 
   Int _s, dx, dy;

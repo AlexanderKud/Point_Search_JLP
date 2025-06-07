@@ -7,8 +7,6 @@ default:
 	g++ -O3 -march=native -c util/util.cpp -o util.o
 	g++ -O3 -march=native -Wno-write-strings -c generate_bloom.cpp
 	g++ -O3 -march=native -Wno-write-strings -c point_search.cpp
-	g++ -O3 -march=native -Wno-write-strings -c point_search_batch.cpp
-	g++ -o generate_bloom generate_bloom.o util.o SECP256K1.o Int.o IntGroup.o IntMod.o Point.o -lgmp
+	g++ -o generate_bloom generate_bloom.o util.o SECP256K1.o Int.o IntGroup.o IntMod.o Point.o -lgmp -fopenmp
 	g++ -o point_search point_search.o util.o SECP256K1.o Int.o IntGroup.o IntMod.o Point.o -lgmp
-	g++ -o point_search_batch point_search_batch.o util.o SECP256K1.o Int.o IntGroup.o IntMod.o Point.o -lgmp
 	rm *.o

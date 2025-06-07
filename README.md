@@ -1,46 +1,35 @@
 <pre>
 Requires C++ Boost Library to be installed. <a href="https://www.boost.org">https://www.boost.org</a>
 Requires C/C++ GMP Library to be installed. <a href="https://gmplib.org">https://gmplib.org</a>
+Requires C/C++ OpenMP Library to be installed. <a href="https://www.openmp.org">https://www.openmp.org</a>
   
 [alexander@alexander-home Point_Search_JLP]$ ./generate_bloom
-[21:48:59] P_table generated
-[21:48:59] Range Start: 54 bits
-[21:48:59] Range End  : 55 bits
-[21:48:59] Block Width: 2^26
-[21:48:59] Search Pub : 03a5f9c69423c70c64fe162af3936014c1346978dccd681fa06a18edaa24e3f7d5
-[21:48:59] Settings written to file
-[21:48:59] Creating bloom2 image with 4 threads
-[21:48:59] Creating bloom1 image with 4 threads
-[21:50:53] Writing bloom1 image to bloom1.bf
-[21:50:54] Writing bloom2 image to bloom2.bf
-[21:50:54] Elapsed time: (0)hours (1)minutes (55)seconds
+[02:00:44] P_table generated
+[02:00:44] Range Start: 54 bits
+[02:00:44] Range End  : 55 bits
+[02:00:44] Block Width: 2^26
+[02:00:44] Search Pub : 03a5f9c69423c70c64fe162af3936014c1346978dccd681fa06a18edaa24e3f7d5
+[02:00:44] Settings written to file
+[02:00:44] Creating bloom2 image with 4 threads
+[02:00:44] Creating bloom1 image with 4 threads
+[02:03:13] Writing bloom2 image to bloom2.bf
+[02:03:14] Writing bloom1 image to bloom1.bf
+[02:03:14] Elapsed time: (0)hours (2)minutes (31)seconds
 
 
 [alexander@alexander-home Point_Search_JLP]$ ./point_search
-[21:51:09] S_table generated
-[21:51:09] Range Start: 54 bits
-[21:51:09] Range End  : 55 bits
-[21:51:09] Block Width: 2^26
-[21:51:09] Search Pub : 03a5f9c69423c70c64fe162af3936014c1346978dccd681fa06a18edaa24e3f7d5
-[21:51:09] Loading Bloomfilter bloom1.bf
-[21:51:09] Loading Bloomfilter bloom2.bf
-[21:51:09] Search in progress...
-[21:51:53] BloomFilter Hit bloom2.bf (Odd Point) [Higher Range Half]
-[21:51:53] Privatekey: 29831168849479125
-[21:51:53] Elapsed time: (0)hours (0)minutes (44)seconds
+[02:03:20] S_table generated
+[02:03:20] Range Start: 54 bits
+[02:03:20] Range End  : 55 bits
+[02:03:20] Block Width: 2^26
+[02:03:20] Search Pub : 03a5f9c69423c70c64fe162af3936014c1346978dccd681fa06a18edaa24e3f7d5
+[02:03:20] Loading Bloomfilter bloom1.bf
+[02:03:20] Loading Bloomfilter bloom2.bf
+[02:03:20] Search in progress...
+[02:03:33] BloomFilter Hit bloom2.bf (Odd Point) [Higher Range Half]
+[02:03:33] Privatekey: 29831168849479125
+[02:03:33] Elapsed time: (0)hours (0)minutes (12)seconds
 
-[alexander@alexander-home Point_Search_JLP]$ ./point_search_batch
-[21:51:58] S_table generated
-[21:51:58] Range Start: 54 bits
-[21:51:58] Range End  : 55 bits
-[21:51:58] Block Width: 2^26
-[21:51:58] Search Pub : 03a5f9c69423c70c64fe162af3936014c1346978dccd681fa06a18edaa24e3f7d5
-[21:51:58] Loading Bloomfilter bloom1.bf
-[21:51:58] Loading Bloomfilter bloom2.bf
-[21:51:59] Search in progress...
-[21:52:25] BloomFilter Hit bloom2.bf (Odd Point) [Higher Range Half]
-[21:52:25] Privatekey: 29831168849479125
-[21:52:25] Elapsed time: (0)hours (0)minutes (26)seconds
 
 Point batch addition with batch inversion under the hood.
 Special thanks to NoMachine for his code draft!!!
