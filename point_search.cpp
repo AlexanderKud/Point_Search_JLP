@@ -20,7 +20,7 @@ auto main() -> int {
 
     Secp256K1* secp256k1 = new Secp256K1(); secp256k1->Init(); // initialize secp256k1 context
     int cpuCores = 4; // actual number of processing cores divided by 2
-    int xC_len = 15; // X coordinate length to be checked for being insererted into the bloomfilter (should be equal for generate_bloom and point_search max=33(full length X coordinate))
+    int xC_len = 15; // X coordinate length to be checked for being inserted into the bloomfilter (should be the same for generate_bloom and point_search max=33(full length X coordinate))
     
     Int pk; pk.SetInt32(1); // generating power of two values (2^0..2^256) table
     uint64_t mult = 2;
