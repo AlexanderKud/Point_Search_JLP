@@ -2,6 +2,13 @@
 Requires C++ Boost Library to be installed. <a href="https://www.boost.org">https://www.boost.org</a>
 Requires C/C++ GMP Library to be installed. <a href="https://gmplib.org">https://gmplib.org</a>
 Requires C/C++ OpenMP Library to be installed. <a href="https://www.openmp.org">https://www.openmp.org</a>
+
+This is a pre_update.
+Final Update will implement entire set of ec logic from JLP BSGS.cpp
+- batch addition/subtraction
+- batch inversion
+- center of the group
+- calculating just x coordinate for the batch
   
 [alexander@alexander-home Point_Search_JLP]$ ./generate_bloom
 [02:00:44] P_table generated
