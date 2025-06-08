@@ -138,8 +138,7 @@ auto main() -> int {
         filter bf(n_elements, error);
         
         auto process_chunk = [&](Point start_point) { // function for a thread
-            
-            
+                      
             Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
             IntGroup modGroup(POINTS_BATCH_SIZE); // group of deltaX (x1 - x2) set for batch inversion
             Int pointBatchX[POINTS_BATCH_SIZE]; // X coordinates of the batch
@@ -152,8 +151,7 @@ auto main() -> int {
             
             Point BloomP; // point for insertion of the batch into the bloomfilter
             Int deltaY, slope, slopeSquared; // values to store the results of points addition formula
-            
-            
+                        
             for (int i = 0; i < nbBatch; i++) {
                 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // we compute (x1 - x2) for each entry of the entire batch
@@ -183,8 +181,7 @@ auto main() -> int {
                     bf.insert(secp256k1->GetXHex(&pointBatchX[i], xC_len));
                 }
                 omp_unset_lock(&lock1);
-                
-                
+                               
                 startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]); // setting the new startPoint for the next batch iteration
                 startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]);
                 startPoint.z.SetInt32(1);
@@ -240,9 +237,7 @@ auto main() -> int {
             
             Point BloomP; // point for insertion of the batch into the bloomfilter
             Int deltaY, slope, slopeSquared; // values to store result in points addition formula
-            
-            
-            
+                        
             for (int i = 0; i < nbBatch; i++) {
                 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) {         // // we compute (x1 - x2) for each entry of the entire batch
