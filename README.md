@@ -14,7 +14,7 @@ Requires C/C++ OpenMP Library to be installed. <a href="https://www.openmp.org">
 [02:00:44] Creating bloom1 image with 4 threads
 [02:03:13] Writing bloom2 image to bloom2.bf
 [02:03:14] Writing bloom1 image to bloom1.bf
-[02:03:14] Elapsed time: 0)hours (2)minutes (15)seconds
+[02:03:14] Elapsed time: (0)hours (2)minutes (15)seconds
 
 [alexander@alexander-home Point_Search_JLP]$ ./point_search
 [02:03:20] S_table generated
