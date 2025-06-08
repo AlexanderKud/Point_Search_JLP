@@ -4,7 +4,7 @@ Requires C/C++ GMP Library to be installed. <a href="https://gmplib.org">https:/
 Requires C/C++ OpenMP Library to be installed. <a href="https://www.openmp.org">https://www.openmp.org</a>
 
 This is a pre_update.
-Final Update will implement entire set of ec logic from JLP BSGS.cpp
+Final Update will implement entire set of batch point addition logic from JLP BSGS.cpp
 - batch addition/subtraction
 - batch inversion
 - center of the group
