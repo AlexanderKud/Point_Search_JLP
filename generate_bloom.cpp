@@ -175,7 +175,6 @@ auto main() -> int {
                     pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
                 }
                 
-                #pragma omp parallel for
                 omp_set_lock(&lock1);
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points into the bloomfilter
                     bf.insert(secp256k1->GetXHex(&pointBatchX[i], xC_len));
@@ -261,7 +260,6 @@ auto main() -> int {
                     pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
                 }
                 
-                #pragma omp parallel for
                 omp_set_lock(&lock2);
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points into the bloomfilter
                     bf.insert(secp256k1->GetXHex(&pointBatchX[i], xC_len));
