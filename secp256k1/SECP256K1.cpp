@@ -143,7 +143,7 @@ std::string Secp256K1::GetPublicKeyHex(Point &pubKey) {
   return ret;
 }
 
-std::string Secp256K1::GetXHex(Int* x, int length) {
+std::string Secp256K1::GetXHex(Int *x, int length) {
   unsigned char publicKeyBytes[33];
   char tmp[3];
   std::string ret;
