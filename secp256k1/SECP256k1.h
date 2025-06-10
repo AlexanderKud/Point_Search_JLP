@@ -18,7 +18,7 @@ public:
   bool  EC(Point &p);
 
   std::string GetPublicKeyHex(Point &p);
-  std::string GetXHex(Int* x, int length);
+  std::string GetXHex(Int *x, int length);
   Point ParsePublicKeyHex(std::string pub);
 
   
