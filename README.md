@@ -3,8 +3,8 @@ Requires C++ Boost Library to be installed. <a href="https://www.boost.org">http
 Requires C/C++ GMP Library to be installed. <a href="https://gmplib.org">https://gmplib.org</a>
 Requires C/C++ OpenMP Library to be installed. <a href="https://www.openmp.org">https://www.openmp.org</a>
 
-This is a pre_update.
-Final Update will implement entire set of batch point addition logic from JLP BSGS.cpp
+generate_bloom2.cpp
+JLP Batch Reference Logic
 - batch addition/subtraction
 - batch inversion
 - center of the group
