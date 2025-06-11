@@ -2,6 +2,13 @@
 Requires C++ Boost Library to be installed. <a href="https://www.boost.org">https://www.boost.org</a>
 Requires C/C++ GMP Library to be installed. <a href="https://gmplib.org">https://gmplib.org</a>
 Requires C/C++ OpenMP Library to be installed. <a href="https://www.openmp.org">https://www.openmp.org</a>
+
+This is a pre_update.
+Final Update will implement entire set of batch point addition logic from JLP BSGS.cpp
+- batch addition/subtraction
+- batch inversion
+- center of the group
+- calculating just x coordinate for the batch
   
 [alexander@alexander-home Point_Search_JLP]$ ./generate_bloom
 [02:00:44] P_table generated
@@ -28,12 +35,6 @@ Requires C/C++ OpenMP Library to be installed. <a href="https://www.openmp.org">
 [02:03:33] BloomFilter Hit bloom2.bf (Odd Point) [Higher Range Half]
 [02:03:33] Privatekey: 29831168849479125
 [02:03:33] Elapsed time: (0)hours (0)minutes (9)seconds
-
-
-Point batch addition with batch inversion under the hood.
-Special thanks to NoMachine for his code draft!!!
-
-Special thanks to kTimesG(<a href="https://github.com/kTimesG">https://github.com/kTimesG</a>) for mutex use improvement proposal.
 
 ./generate_bloom uses multiple threads to fill in the bloomfilter binary.
 to split the space evenly, number of cores needs to be some power of two value.
