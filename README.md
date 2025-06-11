@@ -4,7 +4,7 @@ Requires C/C++ GMP Library to be installed. <a href="https://gmplib.org">https:/
 Requires C/C++ OpenMP Library to be installed. <a href="https://www.openmp.org">https://www.openmp.org</a>
 
 generate_bloom2.cpp
-JLP Batch Reference Logic
+JLP Batch Reference Logic:
 - batch addition/subtraction
 - batch inversion
 - center of the group
