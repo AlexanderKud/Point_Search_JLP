@@ -48,10 +48,9 @@ auto main() -> int {
     Int pre_calc_sum; // precalculated sum for private key recovering 512 + 256 = 768 for range[2^10..2^11] 1288 in example
     pre_calc_sum.Add(&S_table[range_start - 1], &S_table[range_start - 2]);
     
-    string bloomfile1 = "bloom1.bf"; // bloomfilter stuff
-    string bloomfile2 = "bloom2.bf";
     using filter = boost::bloom::filter<std::string, 32>;
-    
+   
+    string bloomfile1 = "bloom1.bf";
     print_time(); cout << "Loading Bloomfilter bloom1.bf" << endl;
     filter bf1;
     std::ifstream in1(bloomfile1, std::ios::binary);
@@ -62,7 +61,7 @@ auto main() -> int {
     in1.read((char*) s1.data(), s1.size()); // load array
     in1.close();
 
-    
+    string bloomfile2 = "bloom2.bf";
     print_time(); cout << "Loading Bloomfilter bloom2.bf" << endl;
     filter bf2;
     std::ifstream in2(bloomfile2, std::ios::binary);
@@ -139,23 +138,23 @@ auto main() -> int {
         // scalable lambda gets its chunk to search through
         auto scalable_addition_search = [&](Point starting_Point, int threadIdx, Int offset, Int stride_Sum) {
 
-            Point P;
             Int stride_sum; stride_sum.Set(&stride_Sum);
             Int Int_steps, Int_temp, privkey;
-            string cpub, xc, xc1, xc2;
+            string cpub, xc, xc_sup;
             int index, count;
             uint64_t steps;
             vector<uint64_t> privkey_num;
-
-            Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
+            
             IntGroup modGroup(POINTS_BATCH_SIZE); // group of deltaX (x1 - x2) set for batch inversion
+            Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
+            modGroup.Set(deltaX); // assign array deltaX to modGroup for batch inversion
             Int pointBatchX[POINTS_BATCH_SIZE]; // X coordinates of the batch
             Int pointBatchY[POINTS_BATCH_SIZE]; // Y coordinates of the batch
-                      
+            Int deltaY, slope; // values to store the results of points addition formula
+            
             Point startPoint = starting_Point; // start point
-
             Point BloomP; // point for insertion of the batch into the bloomfilter
-            Int deltaY, slope, slopeSquared; // values to store the results of points addition formula
+            
 
             Int batch_stride, batch_index;
             batch_stride.Mult(&stride, uint64_t(POINTS_BATCH_SIZE));
@@ -166,7 +165,6 @@ auto main() -> int {
                     deltaX[i].ModSub(&startPoint.x, &addPoints[i].x); // insert each entry into the deltaX array
                 }
     
-                modGroup.Set(deltaX); // assign array deltaX to modGroup for batch inversion
                 modGroup.ModInv();    // doing batch inversion
                 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // follow points addition formula logic
@@ -174,8 +172,8 @@ auto main() -> int {
                     deltaY.ModSub(&startPoint.y, &addPoints[i].y);
                     slope.ModMulK1(&deltaY, &deltaX[i]); // deltaX already inverted for each entry of the batch
 
-                    slopeSquared.ModSquareK1(&slope);
-                    pointBatchX[i].ModSub(&slopeSquared, &startPoint.x);
+                    pointBatchX[i].ModSquareK1(&slope);
+                    pointBatchX[i].ModSub(&pointBatchX[i], &startPoint.x);
                     pointBatchX[i].ModSub(&pointBatchX[i], &addPoints[i].x);
                     
                     pointBatchY[i].ModSub(&startPoint.x, &pointBatchX[i]);
@@ -193,24 +191,22 @@ auto main() -> int {
                         
                         BloomP.x.Set(&pointBatchX[i]);
                         BloomP.y.Set(&pointBatchY[i]);
-                        BloomP.z.SetInt32(1);
-                        
-                        P = BloomP;
                         
                         privkey_num.clear();
                         index = 0;
                         for (auto& p : pow10_points) { // getting the index of the element in the bloomfilter
                             count = 0;
-                            xc1 = secp256k1->GetXHex(&P.x, xC_len);
-                            while (bf1.may_contain(xc1)) {
-                                P = secp256k1->SubtractPoints(P, p);
-                                xc1 = secp256k1->GetXHex(&P.x, xC_len);
+                            xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
+                            while (bf1.may_contain(xc_sup)) {
+                                BloomP = secp256k1->SubtractPoints(BloomP, p);
+                                xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
                                 count += 1;
                             }
                             privkey_num.push_back(pow10_nums[index] * (count - 1));
-                            P = secp256k1->AddPoints(P, p);
+                            BloomP = secp256k1->AddPoints(BloomP, p);
                             index += 1;
                         }
+                        
                         steps = 0;
                         for (auto& n : privkey_num) { steps += n; } // we got here the index of the element in the bloomfilter
                         Int_steps.SetInt64(steps); // restoring the private key
@@ -221,8 +217,9 @@ auto main() -> int {
                         privkey.Sub(&pre_calc_sum, &Int_temp);
                         privkey.Mult(mult); // we got here the private key
                         calc_point = secp256k1->ScalarMultiplication(&privkey);
+                        
                         if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
-                            print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
+                            print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
                             outFile.open("found.txt", ios::app);
                             outFile << privkey.GetBase10() << '\n';
@@ -246,24 +243,22 @@ auto main() -> int {
                         
                         BloomP.x.Set(&pointBatchX[i]);
                         BloomP.y.Set(&pointBatchY[i]);
-                        BloomP.z.SetInt32(1);
-                        
-                        P = BloomP;
                         
                         privkey_num.clear();
                         index = 0;
                         for (auto& p : pow10_points) { // getting the index of the element in the bloomfilter
                             count = 0;
-                            xc2 = secp256k1->GetXHex(&P.x, xC_len);
-                            while (bf2.may_contain(xc2)) {
-                                P = secp256k1->SubtractPoints(P, p);
-                                xc2 = secp256k1->GetXHex(&P.x, xC_len);
+                            xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
+                            while (bf2.may_contain(xc_sup)) {
+                                BloomP = secp256k1->SubtractPoints(BloomP, p);
+                                xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
                                 count += 1;
                             }
                             privkey_num.push_back(pow10_nums[index] * (count - 1));
-                            P = secp256k1->AddPoints(P, p);
+                            BloomP = secp256k1->AddPoints(BloomP, p);
                             index += 1;
-                        }                   
+                        }
+                                          
                         steps = 0;
                         for (auto& n : privkey_num) { steps += n; } // we got here the index of the element in the bloomfilter
                         Int_steps.SetInt64(steps); // restoring the private key
@@ -275,8 +270,9 @@ auto main() -> int {
                         privkey.Mult(mult);
                         privkey.AddOne(); // we got here the private key
                         calc_point = secp256k1->ScalarMultiplication(&privkey);
+                        
                         if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
-                            print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
+                            print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
                             outFile.open("found.txt", ios::app);
                             outFile << privkey.GetBase10() << '\n';
@@ -297,13 +293,12 @@ auto main() -> int {
                 
                 startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]); // setting the new startPoint for the next batch iteration
                 startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]);
-                startPoint.z.SetInt32(1);
                 
                 stride_sum.Add(&batch_stride);
                     
                 if (threadIdx == 0) {  // thread with index zero is used to save the progress
                     save_counter += 1; // all values are derived from this data after new program start
-                    if (save_counter % 70000 == 0) {
+                    if (save_counter % 100000 == 0) {
                         cpub = secp256k1->GetPublicKeyHex(startPoint);
                         ofstream outFile;
                         outFile.open("settings1.txt");
@@ -386,23 +381,22 @@ auto main() -> int {
         // scalable lambda gets its chunk to search through
         auto scalable_subtraction_search = [&](Point starting_Point, int threadIdx, Int offset, Int stride_Sum) {
 
-            Point P;
             Int stride_sum; stride_sum.Set(&stride_Sum);
-            string cpub, xc, xc1, xc2;
+            string cpub, xc, xc_sup;
             int index, count;
             uint64_t steps;
             vector<uint64_t> privkey_num;
             Int Int_steps, Int_temp, privkey;
-
-            Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
+            
             IntGroup modGroup(POINTS_BATCH_SIZE); // group of deltaX (x1 - x2) set for batch inversion
+            Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
+            modGroup.Set(deltaX); // assign array deltaX to modGroup for batch inversion
             Int pointBatchX[POINTS_BATCH_SIZE]; // X coordinates of the batch
             Int pointBatchY[POINTS_BATCH_SIZE]; // Y coordinates of the batch
-                      
+            Int deltaY, slope; // values to store the results of points addition formula
+            
             Point startPoint = starting_Point; // start point
-
             Point BloomP; // point for insertion of the batch into the bloomfilter
-            Int deltaY, slope, slopeSquared; // values to store the results of points addition formula
             
             Int batch_stride, batch_index;
             batch_stride.Mult(&stride, uint64_t(POINTS_BATCH_SIZE));
@@ -413,7 +407,6 @@ auto main() -> int {
                     deltaX[i].ModSub(&startPoint.x, &addPoints[i].x); // insert each entry into the deltaX array
                 }
     
-                modGroup.Set(deltaX); // assign array deltaX to modGroup for batch inversion
                 modGroup.ModInv();    // doing batch inversion
                 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // follow points addition formula logic
@@ -421,8 +414,8 @@ auto main() -> int {
                     deltaY.ModSub(&startPoint.y, &addPoints[i].y);
                     slope.ModMulK1(&deltaY, &deltaX[i]); // deltaX already inverted for each entry of the batch
 
-                    slopeSquared.ModSquareK1(&slope);
-                    pointBatchX[i].ModSub(&slopeSquared, &startPoint.x);
+                    pointBatchX[i].ModSquareK1(&slope);
+                    pointBatchX[i].ModSub(&pointBatchX[i], &startPoint.x);
                     pointBatchX[i].ModSub(&pointBatchX[i], &addPoints[i].x);
                     
                     pointBatchY[i].ModSub(&startPoint.x, &pointBatchX[i]);
@@ -440,24 +433,22 @@ auto main() -> int {
                         
                         BloomP.x.Set(&pointBatchX[i]);
                         BloomP.y.Set(&pointBatchY[i]);
-                        BloomP.z.SetInt32(1);
-                        
-                        P = BloomP;
                         
                         privkey_num.clear();
                         index = 0;
                         for (auto& p : pow10_points) { // getting the index of the element in the bloomfilter
                             count = 0;
-                            xc1 = secp256k1->GetXHex(&P.x, xC_len);
-                            while (bf1.may_contain(xc1)) {
-                                P = secp256k1->SubtractPoints(P, p);
-                                xc1 = secp256k1->GetXHex(&P.x, xC_len);
+                            xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
+                            while (bf1.may_contain(xc_sup)) {
+                                BloomP = secp256k1->SubtractPoints(BloomP, p);
+                                xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
                                 count += 1;
                             }
                             privkey_num.push_back(pow10_nums[index] * (count - 1));
-                            P = secp256k1->AddPoints(P, p);
+                            BloomP = secp256k1->AddPoints(BloomP, p);
                             index += 1;
-                        }                   
+                        }
+                                           
                         steps = 0;
                         for (auto& n : privkey_num) { steps += n; } // we got here the index of element in the bloomfilter
                         Int_steps.SetInt64(steps); // restoring the private key
@@ -468,8 +459,9 @@ auto main() -> int {
                         privkey.Add(&pre_calc_sum, &Int_temp);
                         privkey.Mult(mult); // we got here the private key
                         calc_point = secp256k1->ScalarMultiplication(&privkey);
+                        
                         if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
-                            print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
+                            print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
                             outFile.open("found.txt", ios::app);
                             outFile << privkey.GetBase10() << '\n';
@@ -493,24 +485,22 @@ auto main() -> int {
                         
                         BloomP.x.Set(&pointBatchX[i]);
                         BloomP.y.Set(&pointBatchY[i]);
-                        BloomP.z.SetInt32(1);
-                        
-                        P = BloomP;
                         
                         privkey_num.clear();
                         index = 0;
                         for (auto& p : pow10_points) { // getting the index of the element in the bloomfilter
                             count = 0;
-                            xc2 = secp256k1->GetXHex(&P.x, xC_len);
-                            while (bf2.may_contain(xc2)) {
-                                P = secp256k1->SubtractPoints(P, p);
-                                xc2 = secp256k1->GetXHex(&P.x, xC_len);
+                            xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
+                            while (bf2.may_contain(xc_sup)) {
+                                BloomP = secp256k1->SubtractPoints(BloomP, p);
+                                xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
                                 count += 1;
                             }
                             privkey_num.push_back(pow10_nums[index] * (count - 1));
-                            P = secp256k1->AddPoints(P, p);
+                            BloomP = secp256k1->AddPoints(BloomP, p);
                             index += 1;
                         }
+                        
                         steps = 0;
                         for (auto& n : privkey_num) { steps += n; } // we got here the index of the element in the bloomfilter
                         Int_steps.SetInt64(steps); // restoring the private key
@@ -522,8 +512,9 @@ auto main() -> int {
                         privkey.Mult(mult);
                         privkey.AddOne(); // we got here the private key
                         calc_point = secp256k1->ScalarMultiplication(&privkey);
+                        
                         if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
-                            print_time(); cout << "Privatekey: " << privkey.GetBase10() << endl;
+                            print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
                             outFile.open("found.txt", ios::app);
                             outFile << privkey.GetBase10() << '\n';
@@ -544,7 +535,6 @@ auto main() -> int {
                  
                 startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]); // setting the new startPoint for the next batch iteration
                 startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]);
-                startPoint.z.SetInt32(1);
                 
                 stride_sum.Add(&batch_stride);
                 

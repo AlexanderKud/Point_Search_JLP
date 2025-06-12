@@ -18,7 +18,7 @@
 using namespace std;
 namespace fs = filesystem;
 
-static constexpr int POINTS_BATCH_SIZE = 1024; // Batch addition with batch inversion(one ModInv for the entire group) using IntGroup class
+static constexpr int POINTS_BATCH_SIZE = 1024; // Batch addition with batch inversion using IntGroup class
 
 static omp_lock_t lock1;
 static omp_lock_t lock2;
@@ -138,27 +138,25 @@ auto main() -> int {
         filter bf(n_elements, error);
         
         auto process_chunk = [&](Point start_point) { // function for a thread
-                      
-            Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
+            
             IntGroup modGroup(POINTS_BATCH_SIZE); // group of deltaX (x1 - x2) set for batch inversion
+            Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
+            modGroup.Set(deltaX); // assign array deltaX to modGroup for batch inversion
             Int pointBatchX[POINTS_BATCH_SIZE]; // X coordinates of the batch
             Int pointBatchY[POINTS_BATCH_SIZE]; // Y coordinates of the batch
+            Int deltaY, slope; // values to store the results of points addition formula
                       
             Point startPoint = start_point; // start point
             omp_set_lock(&lock1);
             bf.insert(secp256k1->GetXHex(&startPoint.x, xC_len));
             omp_unset_lock(&lock1);
             
-            Point BloomP; // point for insertion of the batch into the bloomfilter
-            Int deltaY, slope, slopeSquared; // values to store the results of points addition formula
-                        
             for (int i = 0; i < nbBatch; i++) {
                 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // we compute (x1 - x2) for each entry of the entire batch
                     deltaX[i].ModSub(&startPoint.x, &addPoints[i].x); // insert each entry into the deltaX array
                 }
     
-                modGroup.Set(deltaX); // assign array deltaX to modGroup for batch inversion
                 modGroup.ModInv();    // doing batch inversion
                 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // follow points addition formula logic
@@ -166,8 +164,8 @@ auto main() -> int {
                     deltaY.ModSub(&startPoint.y, &addPoints[i].y);
                     slope.ModMulK1(&deltaY, &deltaX[i]); // deltaX already inverted for each entry of the batch
 
-                    slopeSquared.ModSquareK1(&slope);
-                    pointBatchX[i].ModSub(&slopeSquared, &startPoint.x);
+                    pointBatchX[i].ModSquareK1(&slope);
+                    pointBatchX[i].ModSub(&pointBatchX[i], &startPoint.x);
                     pointBatchX[i].ModSub(&pointBatchX[i], &addPoints[i].x);
                     
                     pointBatchY[i].ModSub(&startPoint.x, &pointBatchX[i]);
@@ -180,10 +178,10 @@ auto main() -> int {
                     bf.insert(secp256k1->GetXHex(&pointBatchX[i], xC_len));
                 }
                 omp_unset_lock(&lock1);
-                               
+                
                 startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]); // setting the new startPoint for the next batch iteration
                 startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]);
-                startPoint.z.SetInt32(1);
+
             }
             
         };
@@ -224,26 +222,24 @@ auto main() -> int {
         
         auto process_chunk = [&](Point start_point) {  // function for a thread
             
-            Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
             IntGroup modGroup(POINTS_BATCH_SIZE); // group of deltaX (x1 - x2) set for batch inversion
+            Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
+            modGroup.Set(deltaX); // assign array deltaX to modGroup for batch inversion
             Int pointBatchX[POINTS_BATCH_SIZE]; // X coordinates of the batch
             Int pointBatchY[POINTS_BATCH_SIZE]; // Y coordinates of the batch
+            Int deltaY, slope; // values to store the results of points addition formula
                       
             Point startPoint = start_point;  // start point
             omp_set_lock(&lock2);
             bf.insert(secp256k1->GetXHex(&startPoint.x, xC_len));
             omp_unset_lock(&lock2);
             
-            Point BloomP; // point for insertion of the batch into the bloomfilter
-            Int deltaY, slope, slopeSquared; // values to store result in points addition formula
-                        
             for (int i = 0; i < nbBatch; i++) {
                 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) {         // // we compute (x1 - x2) for each entry of the entire batch
                     deltaX[i].ModSub(&startPoint.x, &addPoints[i].x); // insert each entry into the deltaX array
                 }
     
-                modGroup.Set(deltaX); // assign array deltaX to modGroup for batch inversion
                 modGroup.ModInv();    // doing batch inversion
                 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // follow points addition formula logic
@@ -251,8 +247,8 @@ auto main() -> int {
                     deltaY.ModSub(&startPoint.y, &addPoints[i].y);
                     slope.ModMulK1(&deltaY, &deltaX[i]);
                     
-                    slopeSquared.ModSquareK1(&slope);
-                    pointBatchX[i].ModSub(&slopeSquared, &startPoint.x);
+                    pointBatchX[i].ModSquareK1(&slope);
+                    pointBatchX[i].ModSub(&pointBatchX[i], &startPoint.x);
                     pointBatchX[i].ModSub(&pointBatchX[i], &addPoints[i].x);
                     
                     pointBatchY[i].ModSub(&startPoint.x, &pointBatchX[i]);
@@ -268,7 +264,7 @@ auto main() -> int {
                 
                 startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]); // setting the new startPoint for the next batch iteration
                 startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]);
-                startPoint.z.SetInt32(1);
+                
             }
             
         };
