@@ -540,7 +540,7 @@ auto main() -> int {
                 
                 if (threadIdx == 0) {  // thread with index zero is used to save the progress
                     save_counter += 1; // all values are derived from this data after new program start
-                    if (save_counter % 70000 == 0) {
+                    if (save_counter % 100000 == 0) {
                         cpub = secp256k1->GetPublicKeyHex(startPoint);
                         ofstream outFile;
                         outFile.open("settings2.txt");
