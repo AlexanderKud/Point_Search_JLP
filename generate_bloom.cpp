@@ -6,7 +6,6 @@
 #include <vector>
 #include <algorithm>
 #include <thread>
-#include <mutex>
 #include <omp.h>
 
 #include "secp256k1/SECP256k1.h"
@@ -127,8 +126,8 @@ auto main() -> int {
     
     auto bloom_create1 = [&]() {
         
-        string bloomfile = "bloom1.bf"; // bloomfilter for even case (1164->1288)   [1288 + block_width] will hit
-        Point P(puzzle_point);                                   //  (1165.5->1289) [1289 + block_width] will not hit
+        string bloomfile = "bloom1.bf"; //       bloomfilter for even case (1164->1288)   [1288 + block_width] will hit
+        Point P = secp256k1->SubtractPoints(puzzle_point, secp256k1->G); //(1165.5->1289) [1289 + block_width] will not hit
         vector<Point> starting_points;
         for (int i = 0; i < n_cores; i++) { // calculating the starting points 
             starting_points.push_back(P);
@@ -147,9 +146,6 @@ auto main() -> int {
             Int deltaY, slope; // values to store the results of points addition formula
                       
             Point startPoint = start_point; // start point
-            omp_set_lock(&lock1);
-            bf.insert(secp256k1->GetXHex(&startPoint.x, xC_len));
-            omp_unset_lock(&lock1);
             
             for (int i = 0; i < nbBatch; i++) {
                 
@@ -210,8 +206,8 @@ auto main() -> int {
 
     auto bloom_create2 = [&]() {
         
-        string bloomfile = "bloom2.bf"; // bloomfilter for odd case  (1165.5->1289.5) [1289.5 + block_width] will hit
-        Point P(puzzle_point_05);                                 // (1164->1288.5)   [1288.5 + block_width] will not hit
+        string bloomfile = "bloom2.bf"; //           bloomfilter for odd case  (1165.5->1289.5) [1289.5 + block_width] will hit
+        Point P = secp256k1->SubtractPoints(puzzle_point_05, secp256k1->G); // (1164->1288.5)   [1288.5 + block_width] will not hit
         vector<Point> starting_points;
         for (int i = 0; i < n_cores; i++) { // calculating the starting points 
             starting_points.push_back(P);
@@ -230,9 +226,6 @@ auto main() -> int {
             Int deltaY, slope; // values to store the results of points addition formula
                       
             Point startPoint = start_point;  // start point
-            omp_set_lock(&lock2);
-            bf.insert(secp256k1->GetXHex(&startPoint.x, xC_len));
-            omp_unset_lock(&lock2);
             
             for (int i = 0; i < nbBatch; i++) {
                 
