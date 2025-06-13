@@ -83,9 +83,9 @@ auto main() -> int {
     auto start = std::chrono::high_resolution_clock::now();
     
     auto addition_search = [&]() { // addition search for the case when the starting point is behind the target point after calculations
-        uint64_t mult = 2;         // the closer the target point to the center of the range from either side
+                                   // the closer the target point to the center of the range from either side
         int save_counter = 0;      // the faster collision will happen
-        string temp, cpub;
+        string temp;
         Point start_point, stride_point, calc_point;
         Int stride_sum, stride;
         ifstream inFile("settings1.txt");
@@ -98,22 +98,21 @@ auto main() -> int {
         stride.SetInt64(uint64_t(pow(2, block_width)));
         stride_point = secp256k1->ScalarMultiplication(&stride);
         
-        int n_cores = cpuCores; //start splitting the search initiative according to the chosen number of cpu cores
-    
+        //start splitting the search according to the chosen number of cpu cores
         Int offset_Step, int_Cores, vector_Num;
-        int_Cores.SetInt32(n_cores);
+        int_Cores.SetInt32(cpuCores);
         offset_Step.floor_Div(&S_table[range_start - 2], &int_Cores);
         
         vector_Num.SetInt32(0);
         vector<Int> offset_Nums;
-        for (int i = 0; i < n_cores; i++) {
+        for (int i = 0; i < cpuCores; i++) {
             offset_Nums.push_back(vector_Num);
             vector_Num.Add(&offset_Step);
         }
         
         vector<Point> offset_Points;
         offset_Points.push_back(secp256k1->G);
-        for (int i = 1; i < n_cores; i++) {
+        for (int i = 1; i < cpuCores; i++) {
             offset_Points.push_back(secp256k1->ScalarMultiplication(&offset_Nums[i]));
         }
 
@@ -121,7 +120,7 @@ auto main() -> int {
         Point vector_Point(start_point);
         starting_Points.push_back(vector_Point);
 
-        for (int i = 1; i < n_cores; i++) {
+        for (int i = 1; i < cpuCores; i++) {
             vector_Point = secp256k1->AddPoints(start_point, offset_Points[i]);
             starting_Points.push_back(vector_Point);
         }
@@ -312,18 +311,18 @@ auto main() -> int {
             } // while (true) loop end curly brace
         };
         
-        std::thread addition_Threads[n_cores];
-        for (int i = 0; i < n_cores; i++) {
+        std::thread addition_Threads[cpuCores];
+        for (int i = 0; i < cpuCores; i++) {
             addition_Threads[i] = std::thread(scalable_addition_search, starting_Points[i], i , offset_Nums[i], stride_sum);
         }
 
-        for (int i = 0; i < n_cores; i++) {
+        for (int i = 0; i < cpuCores; i++) {
             addition_Threads[i].join();
         }
     };
     
     auto subtraction_search = [&]() { // subtraction search for the case when the starting point is ahead of the target point after calculations
-        uint64_t mult = 2;            // the closer the target point to the center of the range from either side
+                                      // the closer the target point to the center of the range from either side
         int save_counter = 0;         // the faster collision will happen
         string temp;
         Point start_point, stride_point, calc_point;
@@ -338,22 +337,21 @@ auto main() -> int {
         stride.SetInt64(uint64_t(pow(2, block_width)));
         stride_point = secp256k1->ScalarMultiplication(&stride);
         
-        int n_cores = cpuCores; //start splitting the search according to the chosen number of cpu cores
-        
+        //start splitting the search according to the chosen number of cpu cores
         Int offset_Step, int_Cores, vector_Num;
-        int_Cores.SetInt32(n_cores);
+        int_Cores.SetInt32(cpuCores);
         offset_Step.floor_Div(&S_table[range_start - 2], &int_Cores);
         
         vector_Num.SetInt32(0);
         vector<Int> offset_Nums;
-        for (int i = 0; i < n_cores; i++) {
+        for (int i = 0; i < cpuCores; i++) {
             offset_Nums.push_back(vector_Num);
             vector_Num.Add(&offset_Step);
         }
         
         vector<Point> offset_Points;
         offset_Points.push_back(secp256k1->G);
-        for (int i = 1; i < n_cores; i++) {
+        for (int i = 1; i < cpuCores; i++) {
             offset_Points.push_back(secp256k1->ScalarMultiplication(&offset_Nums[i]));
         }
 
@@ -361,7 +359,7 @@ auto main() -> int {
         Point vector_Point(start_point);
         starting_Points.push_back(vector_Point);
 
-        for (int i = 1; i < n_cores; i++) {
+        for (int i = 1; i < cpuCores; i++) {
             vector_Point = secp256k1->SubtractPoints(start_point, offset_Points[i]);
             starting_Points.push_back(vector_Point);
         }
@@ -554,12 +552,12 @@ auto main() -> int {
             }// while (true) loop end curly brace
         };
         
-        std::thread subtraction_Threads[n_cores];
-        for (int i = 0; i < n_cores; i++) {
+        std::thread subtraction_Threads[cpuCores];
+        for (int i = 0; i < cpuCores; i++) {
             subtraction_Threads[i] = std::thread(scalable_subtraction_search, starting_Points[i], i , offset_Nums[i], stride_sum);
         }
 
-        for (int i = 0; i < n_cores; i++) {
+        for (int i = 0; i < cpuCores; i++) {
             subtraction_Threads[i].join();
         }
     };
