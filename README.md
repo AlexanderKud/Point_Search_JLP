@@ -3,6 +3,12 @@ Requires C++ Boost Library to be installed. <a href="https://www.boost.org">http
 Requires C/C++ GMP Library to be installed. <a href="https://gmplib.org">https://gmplib.org</a>
 Requires C/C++ OpenMP Library to be installed. <a href="https://www.openmp.org">https://www.openmp.org</a>
 
+generate_bloom.cpp
+- batch addition
+- batch inversion
+- calculating just x coordinate for the batch - 1
+- calculating x,y for the last of the batch entry (used as the next startPoint)
+
 generate_bloom2.cpp
 JLP Batch Reference Logic:
 - batch addition/subtraction
