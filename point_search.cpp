@@ -35,9 +35,9 @@ auto main() -> int {
     uint64_t range_start, range_end, block_width; // block_width = number of elements in the bloomfilter and a stride size to walk the range
     string temp, search_pub;
     ifstream inFile("settings.txt"); // load setiings from file
-    getline(inFile, temp); range_start = str_to_uint64(temp);
-    getline(inFile, temp); range_end = str_to_uint64(temp);
-    getline(inFile, temp); block_width = str_to_uint64(temp);
+    getline(inFile, temp); range_start = std::stoull(temp);
+    getline(inFile, temp); range_end = std::stoull(temp);
+    getline(inFile, temp); block_width = std::stoull(temp);
     getline(inFile, temp); search_pub = trim(temp);
     inFile.close();
     print_time(); cout << "Range Start: " << range_start << " bits" << endl;
@@ -48,10 +48,11 @@ auto main() -> int {
     Int pre_calc_sum; // precalculated sum for private key recovering 512 + 256 = 768 for range[2^10..2^11] 1288 in example
     pre_calc_sum.Add(&S_table[range_start - 1], &S_table[range_start - 2]);
     
+    print_time(); cout << "Loading Bloomfilter images" << endl;
+    
     using filter = boost::bloom::filter<std::string, 32>;
-   
+    
     string bloomfile1 = "bloom1.bf";
-    print_time(); cout << "Loading Bloomfilter bloom1.bf" << endl;
     filter bf1;
     std::ifstream in1(bloomfile1, std::ios::binary);
     std::size_t c1;
@@ -62,7 +63,6 @@ auto main() -> int {
     in1.close();
 
     string bloomfile2 = "bloom2.bf";
-    print_time(); cout << "Loading Bloomfilter bloom2.bf" << endl;
     filter bf2;
     std::ifstream in2(bloomfile2, std::ios::binary);
     std::size_t c2;

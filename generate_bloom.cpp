@@ -15,7 +15,6 @@
 #include "util/util.h"
 
 using namespace std;
-namespace fs = filesystem;
 
 static constexpr int POINTS_BATCH_SIZE = 1024; // Batch addition with batch inversion using IntGroup class
 
@@ -27,16 +26,12 @@ auto main() -> int {
     auto start = std::chrono::high_resolution_clock::now();    // starting the timer
     Secp256K1* secp256k1 = new Secp256K1(); secp256k1->Init(); // initializing secp256k1 context
     int xC_len = 10; //X coordinate length to be inserted into the bloomfilter (should be the same for generate_bloom and point_search max=33(full length X coordinate))
+   
+    std::remove("settings1.txt"); // remove previous settings and bloom files
+    std::remove("settings2.txt");
+    std::remove("bloom1.bf");
+    std::remove("bloom2.bf");
     
-    fs::path current_path = fs::current_path(); // deleting previous settings and bloom files
-    auto file_list = get_files_in_directory(current_path);
-    vector<string> targets = {"settings1.txt", "settings2.txt", "bloom1.bf", "bloom2.bf"};
-    for (auto& i : file_list) {
-        for (auto& t : targets) {
-            if (i == t) { std::remove(t.c_str()); }
-        }
-    }
-
     Int pk; pk.SetInt32(1); // generating power of two points table (2^0..2^256) 
     uint64_t mult = 2;
     vector<Point> P_table;
@@ -52,9 +47,9 @@ auto main() -> int {
     uint64_t range_start, range_end, block_width; // block_width = number of elements in the bloomfilter and a stride size to walk the range
     string temp, search_pub;
     ifstream inFile("settings.txt");
-    getline(inFile, temp); range_start = str_to_uint64(temp);
-    getline(inFile, temp); range_end = str_to_uint64(temp);
-    getline(inFile, temp); block_width = str_to_uint64(temp);
+    getline(inFile, temp); range_start = std::stoull(temp);
+    getline(inFile, temp); range_end = std::stoull(temp);
+    getline(inFile, temp); block_width = std::stoull(temp);
     getline(inFile, temp); search_pub = trim(temp);
     inFile.close();
     
@@ -195,8 +190,6 @@ auto main() -> int {
         for (int i = 0; i < n_cores; i++) {
             myThreads[i] = std::thread(process_chunk, starting_points[i]);
         }
-    
-        print_time(); cout << "Creating bloom1 image with " << n_cores << " threads" << '\n';
 
         for (int i = 0; i < n_cores; i++) {
             myThreads[i].join(); // waiting for threads to finish
@@ -284,9 +277,7 @@ auto main() -> int {
         for (int i = 0; i < n_cores; i++) {
             myThreads[i] = std::thread(process_chunk, starting_points[i]);
         }
-    
-        print_time(); cout << "Creating bloom2 image with " << n_cores << " threads" << '\n';
-
+        
         for (int i = 0; i < n_cores; i++) {
             myThreads[i].join(); // waiting for threads to finish
         }
@@ -304,6 +295,8 @@ auto main() -> int {
 
     std::thread thread1(bloom_create1);
     std::thread thread2(bloom_create2);
+    
+    print_time(); cout << "Creating bloomfilter images" << '\n';
     
     thread1.join();
     thread2.join();
