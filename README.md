@@ -16,7 +16,8 @@ JLP Batch Reference Logic:
 - center of the group
 - calculating just x coordinate for the batch
 
-Timings are relevant to my PC. Yours might differ in a great way according to your CPU specs.
+Timings are relevant to my PC.
+Yours might differ in a great way according to your CPU specs.
   
 [alexander@alexander-home Point_Search_JLP]$ ./generate_bloom
 [02:00:44] P_table generated
