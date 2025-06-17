@@ -154,8 +154,7 @@ auto main() -> int {
             
             Point startPoint = starting_Point; // start point
             Point BloomP; // point for insertion of the batch into the bloomfilter
-            
-
+        
             Int batch_stride, batch_index;
             batch_stride.Mult(&stride, uint64_t(POINTS_BATCH_SIZE));
         
