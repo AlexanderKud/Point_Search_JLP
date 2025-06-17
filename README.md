@@ -36,8 +36,7 @@ Yours might differ in a great way according to your CPU specs.
 [02:00:44] Block Width: 2^26
 [02:00:44] Search Pub : 03a5f9c69423c70c64fe162af3936014c1346978dccd681fa06a18edaa24e3f7d5
 [02:00:44] Settings written to file
-[02:00:44] Creating bloom2 image with 4 threads
-[02:00:44] Creating bloom1 image with 4 threads
+[02:00:44] Creating bloomfilter images
 [02:03:13] Writing bloom2 image to bloom2.bf
 [02:03:14] Writing bloom1 image to bloom1.bf
 [02:03:14] Elapsed time: (0)hours (2)minutes (8)seconds
@@ -48,8 +47,7 @@ Yours might differ in a great way according to your CPU specs.
 [02:03:20] Range End  : 55 bits
 [02:03:20] Block Width: 2^26
 [02:03:20] Search Pub : 03a5f9c69423c70c64fe162af3936014c1346978dccd681fa06a18edaa24e3f7d5
-[02:03:20] Loading Bloomfilter bloom1.bf
-[02:03:20] Loading Bloomfilter bloom2.bf
+[02:03:20] Loading Bloomfilter images
 [02:03:20] Search in progress...
 [02:03:33] BloomFilter Hit bloom2.bf (Odd Point) [Higher Range Half]
 [02:03:33] Privatekey: 29831168849479125
