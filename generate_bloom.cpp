@@ -147,7 +147,7 @@ auto main() -> int {
                       
             Point startPoint = start_point; // start point
             
-            for (int i = 0; i < nbBatch; i++) {
+            for (int s = 0; s < nbBatch; s++) {
                 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // we compute (x1 - x2) for each entry of the entire batch
                     deltaX[i].ModSub(&startPoint.x, &addPoints[i].x); // insert each entry into the deltaX array
@@ -155,7 +155,8 @@ auto main() -> int {
     
                 modGroup.ModInv();    // doing batch inversion
                 
-                for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // follow points addition formula logic
+                int i;
+                for (i = 0; i < POINTS_BATCH_SIZE - 1; i++) { // follow points addition formula logic
                     
                     deltaY.ModSub(&startPoint.y, &addPoints[i].y);
                     slope.ModMulK1(&deltaY, &deltaX[i]); // deltaX already inverted for each entry of the batch
@@ -163,11 +164,19 @@ auto main() -> int {
                     pointBatchX[i].ModSquareK1(&slope);
                     pointBatchX[i].ModSub(&pointBatchX[i], &startPoint.x);
                     pointBatchX[i].ModSub(&pointBatchX[i], &addPoints[i].x);
-                    
-                    pointBatchY[i].ModSub(&startPoint.x, &pointBatchX[i]);
-                    pointBatchY[i].ModMulK1(&slope, &pointBatchY[i]);
-                    pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
+
                 }
+                
+                deltaY.ModSub(&startPoint.y, &addPoints[i].y);
+                slope.ModMulK1(&deltaY, &deltaX[i]);
+
+                pointBatchX[i].ModSquareK1(&slope);
+                pointBatchX[i].ModSub(&pointBatchX[i], &startPoint.x);
+                pointBatchX[i].ModSub(&pointBatchX[i], &addPoints[i].x);
+                    
+                pointBatchY[i].ModSub(&startPoint.x, &pointBatchX[i]);
+                pointBatchY[i].ModMulK1(&slope, &pointBatchY[i]);
+                pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
                 
                 omp_set_lock(&lock1);
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points into the bloomfilter
@@ -227,7 +236,7 @@ auto main() -> int {
                       
             Point startPoint = start_point;  // start point
             
-            for (int i = 0; i < nbBatch; i++) {
+            for (int s = 0; s < nbBatch; s++) {
                 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) {         // // we compute (x1 - x2) for each entry of the entire batch
                     deltaX[i].ModSub(&startPoint.x, &addPoints[i].x); // insert each entry into the deltaX array
@@ -235,7 +244,8 @@ auto main() -> int {
     
                 modGroup.ModInv();    // doing batch inversion
                 
-                for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // follow points addition formula logic
+                int i;
+                for (i = 0; i < POINTS_BATCH_SIZE - 1; i++) { // follow points addition formula logic
 
                     deltaY.ModSub(&startPoint.y, &addPoints[i].y);
                     slope.ModMulK1(&deltaY, &deltaX[i]);
@@ -243,11 +253,19 @@ auto main() -> int {
                     pointBatchX[i].ModSquareK1(&slope);
                     pointBatchX[i].ModSub(&pointBatchX[i], &startPoint.x);
                     pointBatchX[i].ModSub(&pointBatchX[i], &addPoints[i].x);
-                    
-                    pointBatchY[i].ModSub(&startPoint.x, &pointBatchX[i]);
-                    pointBatchY[i].ModMulK1(&slope, &pointBatchY[i]);
-                    pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
+
                 }
+                
+                deltaY.ModSub(&startPoint.y, &addPoints[i].y);
+                slope.ModMulK1(&deltaY, &deltaX[i]);
+                    
+                pointBatchX[i].ModSquareK1(&slope);
+                pointBatchX[i].ModSub(&pointBatchX[i], &startPoint.x);
+                pointBatchX[i].ModSub(&pointBatchX[i], &addPoints[i].x);
+                    
+                pointBatchY[i].ModSub(&startPoint.x, &pointBatchX[i]);
+                pointBatchY[i].ModMulK1(&slope, &pointBatchY[i]);
+                pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
                 
                 omp_set_lock(&lock2);
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points into the bloomfilter
