@@ -161,13 +161,13 @@ auto main() -> int {
                     deltaY.ModSub(&startPoint.y, &addPoints[i].y);
                     slope.ModMulK1(&deltaY, &deltaX[i]); // deltaX already inverted for each entry of the batch
 
-                    pointBatchX[i].ModSquareK1(&slope);
+                    pointBatchX[i].ModSquareK1(&slope); // calculating just X coordinate
                     pointBatchX[i].ModSub(&pointBatchX[i], &startPoint.x);
                     pointBatchX[i].ModSub(&pointBatchX[i], &addPoints[i].x);
 
                 }
                 
-                deltaY.ModSub(&startPoint.y, &addPoints[i].y);
+                deltaY.ModSub(&startPoint.y, &addPoints[i].y); // calculating X,Y coordinates for the last of the batch entry (used as the next startPoint)
                 slope.ModMulK1(&deltaY, &deltaX[i]);
 
                 pointBatchX[i].ModSquareK1(&slope);
@@ -179,8 +179,8 @@ auto main() -> int {
                 pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
                 
                 omp_set_lock(&lock1);
-                for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points into the bloomfilter
-                    bf.insert(secp256k1->GetXHex(&pointBatchX[i], xC_len));
+                for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points X coordinates into the bloomfilter
+                    bf.insert(secp256k1->GetXHex(&pointBatchX[i], xC_len)); // xC_len (length of the X coordinate hex representation)
                 }
                 omp_unset_lock(&lock1);
                 
@@ -247,16 +247,16 @@ auto main() -> int {
                 int i;
                 for (i = 0; i < POINTS_BATCH_SIZE - 1; i++) { // follow points addition formula logic
 
-                    deltaY.ModSub(&startPoint.y, &addPoints[i].y);
+                    deltaY.ModSub(&startPoint.y, &addPoints[i].y); // deltaX already inverted for each entry of the batch
                     slope.ModMulK1(&deltaY, &deltaX[i]);
                     
-                    pointBatchX[i].ModSquareK1(&slope);
+                    pointBatchX[i].ModSquareK1(&slope); // calculating just X coordinate
                     pointBatchX[i].ModSub(&pointBatchX[i], &startPoint.x);
                     pointBatchX[i].ModSub(&pointBatchX[i], &addPoints[i].x);
 
                 }
                 
-                deltaY.ModSub(&startPoint.y, &addPoints[i].y);
+                deltaY.ModSub(&startPoint.y, &addPoints[i].y); // calculating X,Y coordinates for the last of the batch entry (used as the next startPoint)
                 slope.ModMulK1(&deltaY, &deltaX[i]);
                     
                 pointBatchX[i].ModSquareK1(&slope);
@@ -268,8 +268,8 @@ auto main() -> int {
                 pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
                 
                 omp_set_lock(&lock2);
-                for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points into the bloomfilter
-                    bf.insert(secp256k1->GetXHex(&pointBatchX[i], xC_len));
+                for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points X coordinates into the bloomfilter
+                    bf.insert(secp256k1->GetXHex(&pointBatchX[i], xC_len)); // xC_len (length of the X coordinate hex representation)
                 }
                 omp_unset_lock(&lock2);
                 
