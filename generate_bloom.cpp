@@ -2,7 +2,6 @@
 #include <fstream>
 #include <ctime>
 #include <chrono>
-#include <filesystem>
 #include <vector>
 #include <algorithm>
 #include <thread>
@@ -15,6 +14,10 @@
 #include "util/util.h"
 
 using namespace std;
+using filter = boost::bloom::filter<std::string, 32>; // bloomfilter settings
+
+const double error = 0.0000000001; // errror rate for bloomfilter
+const int n_cores = 4; //actual number of processing cores equal to some power of two value(2,4,8,16,32,64,...) divided by 2
 
 static constexpr int POINTS_BATCH_SIZE = 1024; // Batch addition with batch inversion using IntGroup class
 
@@ -96,10 +99,7 @@ auto main() -> int {
     
     print_time(); cout << "Settings written to file" << endl;
     
-    using filter = boost::bloom::filter<std::string, 32>; // bloomfilter settings
     uint64_t n_elements = uint64_t(pow(2, block_width));  // number of elements == 2^block_width
-    double error = 0.0000000001; // errror rate for bloomfilter
-    int n_cores = 4; //actual number of processing cores equal to some power of two value(2,4,8,16,32,64,...) divided by 2
     uint64_t count = uint64_t(pow(2, block_width) / n_cores); // elements per thread
     Int add_key; add_key.SetInt64(count);
     Point Add_Point = secp256k1->ScalarMultiplication(&add_key); // helper point to calculate the starting points

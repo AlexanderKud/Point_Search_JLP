@@ -2,7 +2,6 @@
 #include <fstream>
 #include <ctime>
 #include <chrono>
-#include <filesystem>
 #include <vector>
 #include <algorithm>
 #include <thread>
@@ -15,7 +14,10 @@
 #include "util/util.h"
 
 using namespace std;
-namespace fs = filesystem;
+using filter = boost::bloom::filter<std::string, 32>; // bloomfilter settings
+
+const double error = 0.0000000001; // errror rate for bloomfilter
+const int nbCPUThread = 4; //actual number of processing cores equal to some power of two value(2,4,8,16,32,64,...) divided by 2
 
 #define CPU_GRP_SIZE 1024
 
@@ -97,9 +99,6 @@ auto main() -> int {
     
     print_time(); cout << "Settings written to file" << endl;
     
-    using filter = boost::bloom::filter<std::string, 32>; // bloomfilter settings
-    double error = 0.0000000001; // errror rate for bloomfilter
-    int nbCPUThread = 4; //actual number of processing cores equal to some power of two value(2,4,8,16,32,64,...) divided by 2
     uint64_t bsSize = pow(2, block_width);  // number of elements == 2^block_width
     uint64_t kPerThread = bsSize / nbCPUThread; // elements per thread
     uint64_t nbStep = kPerThread / CPU_GRP_SIZE;

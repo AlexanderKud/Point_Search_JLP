@@ -13,6 +13,7 @@
 #include "util/util.h"
 
 using namespace std;
+using filter = boost::bloom::filter<std::string, 32>;
 
 static constexpr int POINTS_BATCH_SIZE = 1024; // Batch addition with batch inversion using IntGroup class
 
@@ -49,8 +50,6 @@ auto main() -> int {
     pre_calc_sum.Add(&S_table[range_start - 1], &S_table[range_start - 2]);
     
     print_time(); cout << "Loading Bloomfilter images" << endl;
-    
-    using filter = boost::bloom::filter<std::string, 32>;
     
     string bloomfile1 = "bloom1.bf";
     filter bf1;
