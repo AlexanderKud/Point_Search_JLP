@@ -4,6 +4,8 @@ Requires C/C++ GMP Library to be installed. <a href="https://gmplib.org">https:/
 Requires C/C++ OpenMP Library to be installed. <a href="https://www.openmp.org">https://www.openmp.org</a>
 You can find the right package manager commands on the Internet for your Linux Distro.
 
+On Windows use WSL. Tested to compile and run. (MSYS2 and Cygwin run unstable).
+
 generate_bloom.cpp
 - batch addition
 - batch inversion
