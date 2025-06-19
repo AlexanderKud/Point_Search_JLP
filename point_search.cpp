@@ -1,9 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <ctime>
-#include <chrono>
 #include <vector>
-#include <algorithm>
 #include <thread>
 
 #include "secp256k1/SECP256k1.h"
@@ -15,13 +12,14 @@
 using namespace std;
 using filter = boost::bloom::filter<std::string, 32>;
 
+const int cpuCores = 4; // actual number of processing cores divided by 2
+const int xC_len = 10; // X coordinate length to be checked for being inserted into the bloomfilter (should be the same for generate_bloom and point_search max=33(full length X coordinate))
+
 static constexpr int POINTS_BATCH_SIZE = 1024; // Batch addition with batch inversion using IntGroup class
 
 auto main() -> int {
 
     Secp256K1* secp256k1 = new Secp256K1(); secp256k1->Init(); // initialize secp256k1 context
-    int cpuCores = 4; // actual number of processing cores divided by 2
-    int xC_len = 10; // X coordinate length to be checked for being inserted into the bloomfilter (should be the same for generate_bloom and point_search max=33(full length X coordinate))
     
     Int pk; pk.SetInt32(1); // generating power of two values (2^0..2^256) table
     uint64_t mult = 2;
@@ -41,6 +39,7 @@ auto main() -> int {
     getline(inFile, temp); block_width = std::stoull(temp);
     getline(inFile, temp); search_pub = trim(temp);
     inFile.close();
+    
     print_time(); cout << "Range Start: " << range_start << " bits" << endl;
     print_time(); cout << "Range End  : " << range_end << " bits" << endl;
     print_time(); cout << "Block Width: 2^" << block_width << endl;
@@ -48,11 +47,14 @@ auto main() -> int {
 
     Int pre_calc_sum; // precalculated sum for private key recovering 512 + 256 = 768 for range[2^10..2^11] 1288 in example
     pre_calc_sum.Add(&S_table[range_start - 1], &S_table[range_start - 2]);
+    uint64_t stride_bits = pow(2, block_width);
+    
+    string bloomfile1 = "bloom1.bf";
+    string bloomfile2 = "bloom2.bf";
+    filter bf1, bf2;
     
     print_time(); cout << "Loading Bloomfilter images" << endl;
     
-    string bloomfile1 = "bloom1.bf";
-    filter bf1;
     std::ifstream in1(bloomfile1, std::ios::binary);
     std::size_t c1;
     in1.read((char*) &c1, sizeof(c1));
@@ -61,8 +63,6 @@ auto main() -> int {
     in1.read((char*) s1.data(), s1.size()); // load array
     in1.close();
 
-    string bloomfile2 = "bloom2.bf";
-    filter bf2;
     std::ifstream in2(bloomfile2, std::ios::binary);
     std::size_t c2;
     in2.read((char*) &c2, sizeof(c2));
@@ -79,7 +79,7 @@ auto main() -> int {
         pow10_points.push_back(secp256k1->ScalarMultiplication(&pow_key));
     }
     
-    auto start = std::chrono::high_resolution_clock::now();
+    auto chrono_start = std::chrono::high_resolution_clock::now();
     
     auto addition_search = [&]() { // addition search for the case when the starting point is behind the target point after calculations
                                    // the closer the target point to the center of the range from either side
@@ -94,7 +94,7 @@ auto main() -> int {
         stride_sum.SetBase10(trim(temp).data());
         inFile.close();
         
-        stride.SetInt64(uint64_t(pow(2, block_width)));
+        stride.bits64[0] = stride_bits;
         stride_point = secp256k1->ScalarMultiplication(&stride);
         
         //start splitting the search according to the chosen number of cpu cores
@@ -218,7 +218,8 @@ auto main() -> int {
                         
                         steps = 0;
                         for (auto& n : privkey_num) { steps += n; } // we got here the index of the element in the bloomfilter
-                        Int_steps.SetInt64(steps); // restoring the private key
+                        //Int_steps.SetInt64(steps); // restoring the private key
+                        Int_steps.bits64[0] = steps; 
                         batch_index.Mult(&stride, uint64_t(i + 1));
                         Int_temp.Add(&stride_sum, &batch_index);
                         Int_temp.Add(&offset);
@@ -233,14 +234,7 @@ auto main() -> int {
                             outFile.open("found.txt", ios::app);
                             outFile << privkey.GetBase10() << '\n';
                             outFile.close();
-                            auto end = std::chrono::high_resolution_clock::now();
-                            auto duration = end - start;
-                            auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
-                            duration -= hours;
-                            auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
-                            duration -= minutes;
-                            auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-                            print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
+                            print_elapsed_time(chrono_start);
                             exit(0);
                         }
                         print_time(); cout << "False Positive" << endl;
@@ -272,7 +266,8 @@ auto main() -> int {
                                           
                         steps = 0;
                         for (auto& n : privkey_num) { steps += n; } // we got here the index of the element in the bloomfilter
-                        Int_steps.SetInt64(steps); // restoring the private key
+                        //Int_steps.SetInt64(steps); // restoring the private key
+                        Int_steps.bits64[0] = steps;
                         batch_index.Mult(&stride, uint64_t(i + 1));
                         Int_temp.Add(&stride_sum, &batch_index);
                         Int_temp.Add(&offset);
@@ -288,14 +283,7 @@ auto main() -> int {
                             outFile.open("found.txt", ios::app);
                             outFile << privkey.GetBase10() << '\n';
                             outFile.close();
-                            auto end = std::chrono::high_resolution_clock::now();
-                            auto duration = end - start;
-                            auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
-                            duration -= hours;
-                            auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
-                            duration -= minutes;
-                            auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-                            print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
+                            print_elapsed_time(chrono_start);
                             exit(0);
                         }
                         print_time(); cout << "False Positive" << endl; 
@@ -346,7 +334,7 @@ auto main() -> int {
         stride_sum.SetBase10(trim(temp).data());
         inFile.close();
         
-        stride.SetInt64(uint64_t(pow(2, block_width)));
+        stride.bits64[0] = stride_bits;
         stride_point = secp256k1->ScalarMultiplication(&stride);
         
         //start splitting the search according to the chosen number of cpu cores
@@ -473,7 +461,8 @@ auto main() -> int {
                                            
                         steps = 0;
                         for (auto& n : privkey_num) { steps += n; } // we got here the index of element in the bloomfilter
-                        Int_steps.SetInt64(steps); // restoring the private key
+                        //Int_steps.SetInt64(steps); // restoring the private key
+                        Int_steps.bits64[0] = steps;
                         batch_index.Mult(&stride, uint64_t(i + 1));
                         Int_temp.Add(&stride_sum, &batch_index);                        
                         Int_temp.Add(&offset);
@@ -488,14 +477,7 @@ auto main() -> int {
                             outFile.open("found.txt", ios::app);
                             outFile << privkey.GetBase10() << '\n';
                             outFile.close();
-                            auto end = std::chrono::high_resolution_clock::now();
-                            auto duration = end - start;
-                            auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
-                            duration -= hours;
-                            auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
-                            duration -= minutes;
-                            auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-                            print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
+                            print_elapsed_time(chrono_start);
                             exit(0);
                         }
                         print_time(); cout << "False Positive" << endl;
@@ -527,7 +509,8 @@ auto main() -> int {
                         
                         steps = 0;
                         for (auto& n : privkey_num) { steps += n; } // we got here the index of the element in the bloomfilter
-                        Int_steps.SetInt64(steps); // restoring the private key
+                        //Int_steps.SetInt64(steps); // restoring the private key
+                        Int_steps.bits64[0] = steps;
                         batch_index.Mult(&stride, uint64_t(i + 1));
                         Int_temp.Add(&stride_sum, &batch_index);                        
                         Int_temp.Add(&offset);
@@ -543,14 +526,7 @@ auto main() -> int {
                             outFile.open("found.txt", ios::app);
                             outFile << privkey.GetBase10() << '\n';
                             outFile.close();
-                            auto end = std::chrono::high_resolution_clock::now();
-                            auto duration = end - start;
-                            auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
-                            duration -= hours;
-                            auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
-                            duration -= minutes;
-                            auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-                            print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
+                            print_elapsed_time(chrono_start);
                             exit(0);
                         }
                         print_time(); cout << "False Positive" << endl;

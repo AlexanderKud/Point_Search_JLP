@@ -1,9 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <ctime>
-#include <chrono>
 #include <vector>
-#include <algorithm>
 #include <thread>
 #include <omp.h>
 
@@ -26,7 +23,7 @@ static omp_lock_t lock2;
 
 auto main() -> int {
     
-    auto start = std::chrono::high_resolution_clock::now();    // starting the timer
+    auto chrono_start = std::chrono::high_resolution_clock::now();    // starting the timer
     Secp256K1* secp256k1 = new Secp256K1(); secp256k1->Init(); // initializing secp256k1 context
     int xC_len = 10; //X coordinate length to be inserted into the bloomfilter (should be the same for generate_bloom and point_search max=33(full length X coordinate))
    
@@ -62,46 +59,42 @@ auto main() -> int {
     print_time(); cout << "Search Pub : " << search_pub << endl;
 
     Point point_05, puzzle_point, puzzle_point_05, puzzle_point_divide2; // calculation points
-    Point first_point, second_point, P1, P2, Q1, Q2;                     // take 2^10 .. 2^11 range for example
-    Int stride_sum; stride_sum.SetInt32(0); // value to keep the travelled distance by stride
-    Int d_05, div2;
-    d_05.SetBase10("57896044618658097711785492504343953926418782139537452191302581570759080747169");
-    div2.SetInt32(2);
+    Point first_point, second_point, P1, P2, Q;                     // take 2^10 .. 2^11 range for example
+    Int d_05; d_05.SetBase10("57896044618658097711785492504343953926418782139537452191302581570759080747169");
+    
     point_05 = secp256k1->ScalarMultiplication(&d_05); // multiplicative inverse of 2 mod N (0.5)
     puzzle_point = secp256k1->ParsePublicKeyHex(search_pub); // 1288 1289 points for example
     puzzle_point_05 = secp256k1->AddPoints(puzzle_point, point_05); // 1288 + 0.5 = 1288.5
                                                                     // 1289 + 0.5 = 1289.5
-    puzzle_point_divide2 = secp256k1->PointDivision(puzzle_point, &div2); // 1288 : 2 = 644
-                                                                          // 1289 : 2 = 644.5
+    puzzle_point_divide2 = secp256k1->PointMultiplication(puzzle_point, &d_05); // 1288 : 2 = 644
+                                                                                // 1289 : 2 = 644.5
     first_point  = P_table[range_start - 1]; // 512
     second_point = P_table[range_start - 2]; // 256
 
     P1 = secp256k1->SubtractPoints(puzzle_point_divide2, first_point); // 644 - 512 = 132  644.5 - 512 = 132.5
     P2 = secp256k1->SubtractPoints(puzzle_point_divide2, second_point);// 644 - 256 = 388  644.5 - 256 = 388.5
-    Q1 = secp256k1->AddPoints(P1, P2);                                 // 132 + 388 = 520  132.5 + 388.5 = 521
-    Q2 = secp256k1->AddPoints(puzzle_point_divide2, Q1);               // 644 + 520 = 1164 (point 1164)  644.5 + 521 = 1165.5
-                                                                       // if the puzzle point is in the lower range half
-    string s1, s2;                                                     // the calculated point will behind it 1164 - > 1288(addition_search)
-    s1 = secp256k1->GetPublicKeyHex(Q2);                               // if the puzzle point is in the higher range half 1784
-    s2 = stride_sum.GetBase10();                                       // the calculated point will be ahead of it
-                                                                       // 1784 < - 1908 (subtraction_search)
-    ofstream outFile1;                        // writing settings to files
+    Q = secp256k1->AddPoints(P1, P2);                                  // 132 + 388 = 520  132.5 + 388.5 = 521
+    Q = secp256k1->AddPoints(Q, puzzle_point_divide2);                 // 644 + 520 = 1164 (point 1164)  644.5 + 521 = 1165.5
+                                                                       // if the puzzle point is in the lower range half the calculated point will behind it 1164 - > 1288(addition_search)
+    string sp{secp256k1->GetPublicKeyHex(Q)};                          // if the puzzle point is in higher range half
+                                                                       // the calculated point will be ahead of it// 1784 < - 1908 (subtraction_search)
+    ofstream outFile1; // writing settings to files
     outFile1.open("settings1.txt", ios::app);                          // for odd number 1289 the point will be 1165.5
-    outFile1 << s1 <<'\n';                                             // that is why two bloomfilters are used
-    outFile1 << s2 << '\n';
+    outFile1 << sp <<'\n';                                             // that is why two bloomfilters are used
+    outFile1 << "0" << '\n';
     outFile1.close();
     
     ofstream outFile2;
     outFile2.open("settings2.txt", ios::app);
-    outFile2 << s1 <<'\n';
-    outFile2 << s2 << '\n';
+    outFile2 << sp <<'\n';
+    outFile2 << "0" << '\n';
     outFile2.close();
     
     print_time(); cout << "Settings written to file" << endl;
     
-    uint64_t n_elements = uint64_t(pow(2, block_width));  // number of elements == 2^block_width
-    uint64_t count = uint64_t(pow(2, block_width) / n_cores); // elements per thread
-    Int add_key; add_key.SetInt64(count);
+    uint64_t n_elements = pow(2, block_width);  // number of elements == 2^block_width
+    uint64_t keysPerThread = n_elements / n_cores; // elements per thread
+    Int add_key; add_key.SetInt64(keysPerThread);
     Point Add_Point = secp256k1->ScalarMultiplication(&add_key); // helper point to calculate the starting points
     
     Point addPoints[POINTS_BATCH_SIZE]; // array for the batch addition points(1G .. 1024G)
@@ -114,7 +107,7 @@ auto main() -> int {
         addPoints[i] = batch_Add;
     }
     
-    int nbBatch = count / POINTS_BATCH_SIZE; // number of batches for the single thread
+    int nbBatch = keysPerThread / POINTS_BATCH_SIZE; // number of batches for the single thread
     
     omp_init_lock(&lock1);
     omp_init_lock(&lock2);
@@ -123,9 +116,9 @@ auto main() -> int {
         
         string bloomfile = "bloom1.bf"; //       bloomfilter for even case (1164->1288)   [1288 + block_width] will hit
         Point P = secp256k1->SubtractPoints(puzzle_point, secp256k1->G); //(1165.5->1289) [1289 + block_width] will not hit
-        vector<Point> starting_points;
+        Point starting_points[n_cores];
         for (int i = 0; i < n_cores; i++) { // calculating the starting points 
-            starting_points.push_back(P);
+            starting_points[i] = P;
             P = secp256k1->AddPoints(P, Add_Point);
         }
 
@@ -210,9 +203,9 @@ auto main() -> int {
         
         string bloomfile = "bloom2.bf"; //           bloomfilter for odd case  (1165.5->1289.5) [1289.5 + block_width] will hit
         Point P = secp256k1->SubtractPoints(puzzle_point_05, secp256k1->G); // (1164->1288.5)   [1288.5 + block_width] will not hit
-        vector<Point> starting_points;
+        Point starting_points[n_cores];
         for (int i = 0; i < n_cores; i++) { // calculating the starting points 
-            starting_points.push_back(P);
+            starting_points[i] = P;
             P = secp256k1->AddPoints(P, Add_Point);
         }
         
@@ -300,13 +293,7 @@ auto main() -> int {
     
     thread1.join();
     thread2.join();
+    
+    print_elapsed_time(chrono_start);
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = end - start;
-    auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
-    duration -= hours;
-    auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
-    duration -= minutes;
-    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-    print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
 }

@@ -1,9 +1,9 @@
 #include <string.h>
 #include <ctime>
+#include <chrono>
 #include <string>
 #include <iostream>
 #include <cmath>
-#include <cstdint>
 
 #include "util.h"
 
@@ -47,4 +47,15 @@ vector<uint64_t> break_down_to_pow10(uint64_t num) {
     int num_len = stri.length() - 2;
     for (int pw = num_len; pw >= 0; pw--) { nums.push_back(uint64_t(pow(10, pw))); }
     return nums;
+}
+
+void print_elapsed_time(std::chrono::time_point<std::chrono::system_clock> start) {
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = end - start;
+    auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
+    duration -= hours;
+    auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration);
+    duration -= minutes;
+    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+    print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
 }
