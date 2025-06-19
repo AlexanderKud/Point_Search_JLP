@@ -4,11 +4,14 @@ Requires C/C++ GMP Library to be installed. <a href="https://gmplib.org">https:/
 Requires C/C++ OpenMP Library to be installed. <a href="https://www.openmp.org">https://www.openmp.org</a>
 You can find the right package manager commands on the Internet for your Linux Distro.
 
+On Windows use WSL. Tested to compile and run. (MSYS2 and Cygwin run unstable).
+
 generate_bloom.cpp
 - batch addition
 - batch inversion
 - calculating just x coordinate for the batch - 1
 - calculating x,y for the last of the batch entry (used as the next startPoint)
+- bloom add only x coordinate
 
 generate_bloom2.cpp
 JLP Batch Reference Logic:
@@ -23,6 +26,7 @@ point_search.cpp
 - batch inversion
 - calculating just x coordinate for the batch - 1
 - calculating x,y for the last of the batch entry (used as the next startPoint)
+- bloom check by x coordinate, computing y coordinate only if there is a hit
 
 Timings are relevant to my PC.
 Yours might differ in a great way according to your CPU specs.
