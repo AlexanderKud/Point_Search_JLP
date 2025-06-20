@@ -145,7 +145,7 @@ auto main() -> int {
             
             IntGroup modGroup(POINTS_BATCH_SIZE); // group of deltaX (x1 - x2) set for batch inversion
             Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
-            modGroup.Set(deltaX); // assign array deltaX to modGroup for batch inversion
+            modGroup.Set(deltaX); // assign array deltaX to modGroup for batch inversion (JLP way set it once)
             Int pointBatchX[POINTS_BATCH_SIZE]; // X coordinates of the batch
             Int pointBatchY[POINTS_BATCH_SIZE]; // Y coordinates of the batch
             Int deltaY; // values to store the results of points addition formula
@@ -171,13 +171,13 @@ auto main() -> int {
                     deltaY.ModSub(&startPoint.y, &addPoints[i].y);
                     slope[i].ModMulK1(&deltaY, &deltaX[i]); // deltaX already inverted for each entry of the batch
 
-                    pointBatchX[i].ModSquareK1(&slope[i]);
+                    pointBatchX[i].ModSquareK1(&slope[i]); // computing just x coordinate for the (batch_size - 1)
                     pointBatchX[i].ModSub(&pointBatchX[i], &startPoint.x);
                     pointBatchX[i].ModSub(&pointBatchX[i], &addPoints[i].x);
                     
                 }
                 
-                deltaY.ModSub(&startPoint.y, &addPoints[i].y);
+                deltaY.ModSub(&startPoint.y, &addPoints[i].y); // computing the last entry of the batch full (x,y) coordinates
                 slope[i].ModMulK1(&deltaY, &deltaX[i]); // deltaX already inverted for each entry of the batch
 
                 pointBatchX[i].ModSquareK1(&slope[i]);
@@ -218,8 +218,7 @@ auto main() -> int {
                         
                         steps = 0;
                         for (auto& n : privkey_num) { steps += n; } // we got here the index of the element in the bloomfilter
-                        //Int_steps.SetInt64(steps); // restoring the private key
-                        Int_steps.bits64[0] = steps; 
+                        Int_steps.bits64[0] = steps; // restoring the private key
                         batch_index.Mult(&stride, uint64_t(i + 1));
                         Int_temp.Add(&stride_sum, &batch_index);
                         Int_temp.Add(&offset);
@@ -266,8 +265,7 @@ auto main() -> int {
                                           
                         steps = 0;
                         for (auto& n : privkey_num) { steps += n; } // we got here the index of the element in the bloomfilter
-                        //Int_steps.SetInt64(steps); // restoring the private key
-                        Int_steps.bits64[0] = steps;
+                        Int_steps.bits64[0] = steps; // restoring the private key
                         batch_index.Mult(&stride, uint64_t(i + 1));
                         Int_temp.Add(&stride_sum, &batch_index);
                         Int_temp.Add(&offset);
@@ -290,7 +288,7 @@ auto main() -> int {
                     }
                 }
                 
-                startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]); // setting the new startPoint for the next batch iteration
+                startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]); // last batch entry as the new startPoint for the next batch iteration
                 startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]);
                 
                 stride_sum.Add(&batch_stride);
@@ -388,7 +386,7 @@ auto main() -> int {
             
             IntGroup modGroup(POINTS_BATCH_SIZE); // group of deltaX (x1 - x2) set for batch inversion
             Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
-            modGroup.Set(deltaX); // assign array deltaX to modGroup for batch inversion
+            modGroup.Set(deltaX); // assign array deltaX to modGroup for batch inversion (JLP way set it once)
             Int pointBatchX[POINTS_BATCH_SIZE]; // X coordinates of the batch
             Int pointBatchY[POINTS_BATCH_SIZE]; // Y coordinates of the batch
             Int deltaY; // values to store the results of points addition formula
@@ -414,13 +412,13 @@ auto main() -> int {
                     deltaY.ModSub(&startPoint.y, &addPoints[i].y);
                     slope[i].ModMulK1(&deltaY, &deltaX[i]); // deltaX already inverted for each entry of the batch
 
-                    pointBatchX[i].ModSquareK1(&slope[i]);
+                    pointBatchX[i].ModSquareK1(&slope[i]); // computing just x coordinate for the (batch_size - 1)
                     pointBatchX[i].ModSub(&pointBatchX[i], &startPoint.x);
                     pointBatchX[i].ModSub(&pointBatchX[i], &addPoints[i].x);
                     
                 }
                 
-                deltaY.ModSub(&startPoint.y, &addPoints[i].y);
+                deltaY.ModSub(&startPoint.y, &addPoints[i].y); // computing the last entry of the batch full (x,y) coordinates
                 slope[i].ModMulK1(&deltaY, &deltaX[i]); // deltaX already inverted for each entry of the batch
 
                 pointBatchX[i].ModSquareK1(&slope[i]);
@@ -461,8 +459,7 @@ auto main() -> int {
                                            
                         steps = 0;
                         for (auto& n : privkey_num) { steps += n; } // we got here the index of element in the bloomfilter
-                        //Int_steps.SetInt64(steps); // restoring the private key
-                        Int_steps.bits64[0] = steps;
+                        Int_steps.bits64[0] = steps; // restoring the private key
                         batch_index.Mult(&stride, uint64_t(i + 1));
                         Int_temp.Add(&stride_sum, &batch_index);                        
                         Int_temp.Add(&offset);
@@ -509,8 +506,7 @@ auto main() -> int {
                         
                         steps = 0;
                         for (auto& n : privkey_num) { steps += n; } // we got here the index of the element in the bloomfilter
-                        //Int_steps.SetInt64(steps); // restoring the private key
-                        Int_steps.bits64[0] = steps;
+                        Int_steps.bits64[0] = steps; // restoring the private key
                         batch_index.Mult(&stride, uint64_t(i + 1));
                         Int_temp.Add(&stride_sum, &batch_index);                        
                         Int_temp.Add(&offset);
@@ -533,8 +529,8 @@ auto main() -> int {
                     }
                 }
                  
-                startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]); // setting the new startPoint for the next batch iteration
-                startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]);
+                startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]); // last batch entry as the new startPoint for the next batch iteration
+                startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]); 
                 
                 stride_sum.Add(&batch_stride);
                 
