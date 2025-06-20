@@ -94,7 +94,7 @@ auto main() -> int {
         stride_sum.SetBase10(trim(temp).data());
         inFile.close();
         
-        stride.bits64[0] = stride_bits;
+        stride.SetInt64(stride_bits);
         stride_point = secp256k1->ScalarMultiplication(&stride);
         
         //start splitting the search according to the chosen number of cpu cores
@@ -218,7 +218,7 @@ auto main() -> int {
                         
                         steps = 0;
                         for (auto& n : privkey_num) { steps += n; } // we got here the index of the element in the bloomfilter
-                        Int_steps.bits64[0] = steps; // restoring the private key
+                        Int_steps.SetInt64(steps); // restoring the private key
                         batch_index.Mult(&stride, uint64_t(i + 1));
                         Int_temp.Add(&stride_sum, &batch_index);
                         Int_temp.Add(&offset);
@@ -265,7 +265,7 @@ auto main() -> int {
                                           
                         steps = 0;
                         for (auto& n : privkey_num) { steps += n; } // we got here the index of the element in the bloomfilter
-                        Int_steps.bits64[0] = steps; // restoring the private key
+                        Int_steps.SetInt64(steps); // restoring the private key
                         batch_index.Mult(&stride, uint64_t(i + 1));
                         Int_temp.Add(&stride_sum, &batch_index);
                         Int_temp.Add(&offset);
@@ -332,7 +332,7 @@ auto main() -> int {
         stride_sum.SetBase10(trim(temp).data());
         inFile.close();
         
-        stride.bits64[0] = stride_bits;
+        stride.SetInt64(stride_bits);
         stride_point = secp256k1->ScalarMultiplication(&stride);
         
         //start splitting the search according to the chosen number of cpu cores
@@ -459,7 +459,7 @@ auto main() -> int {
                                            
                         steps = 0;
                         for (auto& n : privkey_num) { steps += n; } // we got here the index of element in the bloomfilter
-                        Int_steps.bits64[0] = steps; // restoring the private key
+                        Int_steps.SetInt64(steps); // restoring the private key
                         batch_index.Mult(&stride, uint64_t(i + 1));
                         Int_temp.Add(&stride_sum, &batch_index);                        
                         Int_temp.Add(&offset);
@@ -506,7 +506,7 @@ auto main() -> int {
                         
                         steps = 0;
                         for (auto& n : privkey_num) { steps += n; } // we got here the index of the element in the bloomfilter
-                        Int_steps.bits64[0] = steps; // restoring the private key
+                        Int_steps.SetInt64(steps); // restoring the private key
                         batch_index.Mult(&stride, uint64_t(i + 1));
                         Int_temp.Add(&stride_sum, &batch_index);                        
                         Int_temp.Add(&offset);
