@@ -11,7 +11,7 @@ generate_bloom.cpp
 - batch inversion
 - calculating just x coordinate for the batch - 1
 - calculating x,y for the last of the batch entry (used as the next startPoint)
-- bloom add only x coordinate bits64[3]
+- bloom add only x coordinate bits64[3] hex_string
 
 generate_bloom2.cpp
 JLP Batch Reference Logic:
@@ -26,7 +26,7 @@ point_search.cpp
 - batch inversion
 - calculating just x coordinate for the batch - 1
 - calculating x,y for the last of the batch entry (used as the next startPoint)
-- bloom check by x coordinate bits64[3], computing y coordinate only if there is a hit
+- bloom check by x coordinate bits64[3] hex_string, computing y coordinate only if there is a hit
 
 Timings are relevant to my PC.
 Yours might differ in a great way according to your CPU specs.
