@@ -15,7 +15,7 @@ using namespace std;
 using filter = boost::bloom::filter<std::string, 32>; // bloomfilter settings
 
 const double error = 0.0000000001; // errror rate for bloomfilter
-const int nbCPUThread = 4; //actual number of processing cores equal to some power of two value(2,4,8,16,32,64,...) divided by 2
+const int nbCPUThread = 2; //actual number of processing cores equal to some power of two value(2,4,8,16,32,64,...) divided by 2
 //const int xC_len = 10; //X coordinate length to be inserted into the bloomfilter (should be the same for generate_bloom and point_search max=33(full length X coordinate))
 
 #define CPU_GRP_SIZE 1024
