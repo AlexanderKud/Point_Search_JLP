@@ -3,6 +3,7 @@
 #include <vector>
 #include <thread>
 #include <omp.h>
+#include <format>
 
 #include "secp256k1/SECP256k1.h"
 #include "secp256k1/Int.h"
@@ -15,6 +16,7 @@ using filter = boost::bloom::filter<std::string, 32>; // bloomfilter settings
 
 const double error = 0.0000000001; // errror rate for bloomfilter
 const int nbCPUThread = 4; //actual number of processing cores equal to some power of two value(2,4,8,16,32,64,...) divided by 2
+//const int xC_len = 10; //X coordinate length to be inserted into the bloomfilter (should be the same for generate_bloom and point_search max=33(full length X coordinate))
 
 #define CPU_GRP_SIZE 1024
 
@@ -25,7 +27,6 @@ auto main() -> int {
     
     auto chrono_start = std::chrono::high_resolution_clock::now();    // starting the timer
     Secp256K1* secp256k1 = new Secp256K1(); secp256k1->Init(); // initializing secp256k1 context
-    int xC_len = 10; //X coordinate length to be inserted into the bloomfilter (should be the same for generate_bloom and point_search max=33(full length X coordinate))
     
     std::remove("settings1.txt"); // remove previous settings and bloom files
     std::remove("settings2.txt");
@@ -203,7 +204,8 @@ auto main() -> int {
                 // Add to bloomfilter
                 omp_set_lock(&lock1);
                 for (int i = 0; i < CPU_GRP_SIZE; i++) {
-                    bf.insert(secp256k1->GetXHex(&pts[i].x, xC_len));  // inserting all batch points into the bloomfilter
+                    bf.insert(std::format("{:x}", pts[i].x.bits64[3]));
+                    //bf.insert(secp256k1->GetXHex(&pts[i].x, xC_len));  // inserting all batch points into the bloomfilter
                 }
                 omp_unset_lock(&lock1);
             
@@ -335,7 +337,8 @@ auto main() -> int {
                 // Add to bloomfilter
                 omp_set_lock(&lock2);
                 for (int i = 0; i < CPU_GRP_SIZE; i++) {
-                    bf.insert(secp256k1->GetXHex(&pts[i].x, xC_len));  // inserting all batch points into the bloomfilter
+                    bf.insert(std::format("{:x}", pts[i].x.bits64[3]));
+                    //bf.insert(secp256k1->GetXHex(&pts[i].x, xC_len));  // inserting all batch points into the bloomfilter
                 }
                 omp_unset_lock(&lock2);
             

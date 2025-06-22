@@ -32,28 +32,29 @@ Timings are relevant to my PC.
 Yours might differ in a great way according to your CPU specs.
   
 [alexander@alexander-home Point_Search_JLP]$ ./generate_bloom
-[02:00:44] P_table generated
-[02:00:44] Range Start: 54 bits
-[02:00:44] Range End  : 55 bits
-[02:00:44] Block Width: 2^26
-[02:00:44] Search Pub : 03a5f9c69423c70c64fe162af3936014c1346978dccd681fa06a18edaa24e3f7d5
-[02:00:44] Settings written to file
-[02:00:44] Creating bloomfilter images
-[02:03:13] Writing bloom2 image to bloom2.bf
-[02:03:14] Writing bloom1 image to bloom1.bf
-[02:03:14] Elapsed time: (0)hours (2)minutes (8)seconds
+[20:37:21] P_table generated
+[20:37:21] Range Start: 57 bits
+[20:37:21] Range End  : 58 bits
+[20:37:21] Block Width: 2^28
+[20:37:21] Search Pub : 02d6fba48770c62dbec6e1f88b100dd4d8d213de06cd451c16a12dacdc52d2703d
+[20:37:21] Settings written to file
+[20:37:21] Creating bloomfilter images
+[20:45:30] Writing bloom1 image to bloom1.bf
+[20:45:32] Writing bloom2 image to bloom2.bf
+[20:45:33] Elapsed time: (0)hours (8)minutes (12)seconds
 
 [alexander@alexander-home Point_Search_JLP]$ ./point_search
-[02:03:20] S_table generated
-[02:03:20] Range Start: 54 bits
-[02:03:20] Range End  : 55 bits
-[02:03:20] Block Width: 2^26
-[02:03:20] Search Pub : 03a5f9c69423c70c64fe162af3936014c1346978dccd681fa06a18edaa24e3f7d5
-[02:03:20] Loading Bloomfilter images
-[02:03:20] Search in progress...
-[02:03:33] BloomFilter Hit bloom2.bf (Odd Point) [Higher Range Half]
-[02:03:33] Privatekey: 29831168849479125
-[02:03:33] Elapsed time: (0)hours (0)minutes (9)seconds
+[21:25:01] S_table generated
+[21:25:01] Range Start: 57 bits
+[21:25:01] Range End  : 58 bits
+[21:25:01] Block Width: 2^28
+[21:25:01] Search Pub : 02d6fba48770c62dbec6e1f88b100dd4d8d213de06cd451c16a12dacdc52d2703d
+[21:25:01] Loading Bloomfilter images
+[21:25:03] Search in progress...
+[21:25:20] BloomFilter Hit bloom2.bf (Odd Point) [Higher Range Half]
+[21:25:20] Private key: 247531681757634005
+[21:25:20] Elapsed time: (0)hours (0)minutes (16)seconds
+
 
 ./generate_bloom uses multiple threads to fill in the bloomfilter binary.
 to split the space evenly, number of cores needs to be some power of two value.
@@ -62,8 +63,5 @@ divided by 2
 actual cores = 8  8 / 2 = 4 cores
 
 ./point_search is totally scalable and has no such restriction.
-can set any desirable number of cores to use but divided by 2.
-because we have two search paths : addition and subtraction.
-setting cores beyond hardware concurrency will not yield any additional performance.
 
 </pre>
