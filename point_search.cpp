@@ -73,7 +73,7 @@ auto main() -> int {
     in2.close();
     
     auto pow10_nums = break_down_to_pow10(uint64_t(pow(2, block_width))); // decomposing the 2^block_width to the power of ten values
-    vector<Point> pow10_points;                                           // to get the index of the bloomfilter element fast
+    vector<Point> pow10_points;                                           // to get the offset from the target point based on the bloomfilter hits fast
     Int pow_key;
     for (auto& n : pow10_nums) { // calculating points corresponding to the decomposition components
         pow_key.SetInt64(n);     
@@ -205,7 +205,7 @@ auto main() -> int {
                         
                         privkey_num.clear();
                         index = 0;
-                        for (auto& p : pow10_points) { // getting the index of the element in the bloomfilter
+                        for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
                             count = 0;
                             //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
                             xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
@@ -221,7 +221,7 @@ auto main() -> int {
                         }
                         
                         steps = 0;
-                        for (auto& n : privkey_num) { steps += n; } // we got here the index of the element in the bloomfilter
+                        for (auto& n : privkey_num) { steps += n; } // we got here the offset
                         Int_steps.SetInt64(steps); // restoring the private key
                         batch_index.Mult(&stride, uint64_t(i + 1));
                         Int_temp.Add(&stride_sum, &batch_index);
@@ -254,7 +254,7 @@ auto main() -> int {
                         
                         privkey_num.clear();
                         index = 0;
-                        for (auto& p : pow10_points) { // getting the index of the element in the bloomfilter
+                        for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
                             count = 0;
                             //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
                             xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
@@ -270,7 +270,7 @@ auto main() -> int {
                         }
                                           
                         steps = 0;
-                        for (auto& n : privkey_num) { steps += n; } // we got here the index of the element in the bloomfilter
+                        for (auto& n : privkey_num) { steps += n; } // we got here the offset
                         Int_steps.SetInt64(steps); // restoring the private key
                         batch_index.Mult(&stride, uint64_t(i + 1));
                         Int_temp.Add(&stride_sum, &batch_index);
@@ -451,7 +451,7 @@ auto main() -> int {
                         
                         privkey_num.clear();
                         index = 0;
-                        for (auto& p : pow10_points) { // getting the index of the element in the bloomfilter
+                        for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
                             count = 0;
                             //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
                             xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
@@ -467,7 +467,7 @@ auto main() -> int {
                         }
                                            
                         steps = 0;
-                        for (auto& n : privkey_num) { steps += n; } // we got here the index of element in the bloomfilter
+                        for (auto& n : privkey_num) { steps += n; } // we got here the offset
                         Int_steps.SetInt64(steps); // restoring the private key
                         batch_index.Mult(&stride, uint64_t(i + 1));
                         Int_temp.Add(&stride_sum, &batch_index);                        
@@ -500,7 +500,7 @@ auto main() -> int {
                         
                         privkey_num.clear();
                         index = 0;
-                        for (auto& p : pow10_points) { // getting the index of the element in the bloomfilter
+                        for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
                             count = 0;
                             //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
                             xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
@@ -516,7 +516,7 @@ auto main() -> int {
                         }
                         
                         steps = 0;
-                        for (auto& n : privkey_num) { steps += n; } // we got here the index of the element in the bloomfilter
+                        for (auto& n : privkey_num) { steps += n; } // we got here the offset
                         Int_steps.SetInt64(steps); // restoring the private key
                         batch_index.Mult(&stride, uint64_t(i + 1));
                         Int_temp.Add(&stride_sum, &batch_index);                        
