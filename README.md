@@ -11,7 +11,7 @@ generate_bloom.cpp
 - batch inversion
 - calculating just x coordinate for the batch - 1
 - calculating x,y for the last of the batch entry (used as the next startPoint)
-- bloom add only x coordinate bits64[3] hex_string
+- bloom add only x coordinate uint64_t bits64[3] part
 
 generate_bloom2.cpp
 JLP Batch Reference Logic:
@@ -26,35 +26,34 @@ point_search.cpp
 - batch inversion
 - calculating just x coordinate for the batch - 1
 - calculating x,y for the last of the batch entry (used as the next startPoint)
-- bloom check by x coordinate bits64[3] hex_string, computing y coordinate only if there is a hit
+- bloom check by x coordinate uint64_t bits64[3] part, computing y coordinate only if there is a hit
 
 Timings are relevant to my PC.
 Yours might differ in a great way according to your CPU specs.
   
 [alexander@alexander-home Point_Search_JLP]$ ./generate_bloom
-[20:37:21] P_table generated
-[20:37:21] Range Start: 57 bits
-[20:37:21] Range End  : 58 bits
-[20:37:21] Block Width: 2^28
-[20:37:21] Search Pub : 02d6fba48770c62dbec6e1f88b100dd4d8d213de06cd451c16a12dacdc52d2703d
-[20:37:21] Settings written to file
-[20:37:21] Creating bloomfilter images
-[20:45:30] Writing bloom1 image to bloom1.bf
-[20:45:32] Writing bloom2 image to bloom2.bf
-[20:45:33] Elapsed time: (0)hours (8)minutes (12)seconds
+[23:28:29] P_table generated
+[23:28:29] Range Start: 59 bits
+[23:28:29] Range End  : 60 bits
+[23:28:29] Block Width: 2^30
+[23:28:29] Search Pub : 035c6acbbaa2d43d3134499d937692516202b9de802b739b92b051a05aa4729890
+[23:28:29] Settings written to file
+[23:28:29] Creating bloomfilter images
+[00:04:48] Writing bloom1 image to bloom1.bf
+[00:04:52] Writing bloom2 image to bloom2.bf
+[00:06:00] Elapsed time: (0)hours (37)minutes (30)seconds
 
 [alexander@alexander-home Point_Search_JLP]$ ./point_search
-[21:25:01] S_table generated
-[21:25:01] Range Start: 57 bits
-[21:25:01] Range End  : 58 bits
-[21:25:01] Block Width: 2^28
-[21:25:01] Search Pub : 02d6fba48770c62dbec6e1f88b100dd4d8d213de06cd451c16a12dacdc52d2703d
-[21:25:01] Loading Bloomfilter images
-[21:25:03] Search in progress...
-[21:25:20] BloomFilter Hit bloom2.bf (Odd Point) [Higher Range Half]
-[21:25:20] Private key: 247531681757634005
-[21:25:20] Elapsed time: (0)hours (0)minutes (16)seconds
-
+[00:09:56] S_table generated
+[00:09:56] Range Start: 59 bits
+[00:09:56] Range End  : 60 bits
+[00:09:56] Block Width: 2^30
+[00:09:56] Search Pub : 035c6acbbaa2d43d3134499d937692516202b9de802b739b92b051a05aa4729890
+[00:09:56] Loading Bloomfilter images
+[00:10:21] Search in progress...
+[00:10:47] BloomFilter Hit bloom2.bf (Odd Point) [Higher Range Half]
+[00:10:47] Private key: 1107029469458650963
+[00:10:47] Elapsed time: (0)hours (0)minutes (26)seconds
 
 ./generate_bloom uses multiple threads to fill in the bloomfilter binary.
 to split the space evenly, number of cores needs to be some power of two value.

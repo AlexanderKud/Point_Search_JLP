@@ -3,7 +3,7 @@
 #include <vector>
 #include <thread>
 #include <omp.h>
-#include <format>
+//#include <format>
 
 #include "secp256k1/SECP256k1.h"
 #include "secp256k1/Int.h"
@@ -12,7 +12,7 @@
 #include "util/util.h"
 
 using namespace std;
-using filter = boost::bloom::filter<std::string, 32>; // bloomfilter settings
+using filter = boost::bloom::filter<boost::uint64_t, 32>; // bloomfilter settings
 
 const double error = 0.0000000001; // errror rate for bloomfilter
 const int n_cores = 2; //actual number of processing cores equal to some power of two value(2,4,8,16,32,64,...) divided by 2
@@ -169,7 +169,8 @@ auto main() -> int {
                 
                 omp_set_lock(&lock1);
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points X coordinates into the bloomfilter
-                    bf.insert(std::format("{:x}", pointBatchX[i].bits64[3]));
+                    bf.insert(pointBatchX[i].bits64[3]);
+                    //bf.insert(std::format("{:x}", pointBatchX[i].bits64[3]));
                     //bf.insert(secp256k1->GetXHex(&pointBatchX[i], xC_len)); // xC_len (length of the X coordinate hex representation)
                 }
                 omp_unset_lock(&lock1);
@@ -257,7 +258,8 @@ auto main() -> int {
                 
                 omp_set_lock(&lock2);
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points X coordinates into the bloomfilter
-                    bf.insert(std::format("{:x}", pointBatchX[i].bits64[3]));
+                    bf.insert(pointBatchX[i].bits64[3]);
+                    //bf.insert(std::format("{:x}", pointBatchX[i].bits64[3]));
                     //bf.insert(secp256k1->GetXHex(&pointBatchX[i], xC_len)); // xC_len (length of the X coordinate hex representation)
                 }
                 omp_unset_lock(&lock2);

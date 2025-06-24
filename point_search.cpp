@@ -2,7 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <thread>
-#include <format>
+//#include <format>
 
 #include "secp256k1/SECP256k1.h"
 #include "secp256k1/Int.h"
@@ -11,7 +11,7 @@
 #include "util/util.h"
 
 using namespace std;
-using filter = boost::bloom::filter<std::string, 32>;
+using filter = boost::bloom::filter<boost::uint64_t, 32>;
 
 const int cpuCores = std::thread::hardware_concurrency(); // actual number of processing cores
 //const int xC_len = 10; // X coordinate length to be checked for being inserted into the bloomfilter (should be the same for generate_bloom and point_search max=33(full length X coordinate))
@@ -139,7 +139,8 @@ auto main() -> int {
 
             Int stride_sum; stride_sum.Set(&stride_Sum);
             Int Int_steps, Int_temp, privkey;
-            string cpub, xc, xc_sup;
+            //string cpub, xc, xc_sup;
+            string cpub;
             int index, count;
             uint64_t steps;
             vector<uint64_t> privkey_num;
@@ -190,11 +191,11 @@ auto main() -> int {
                 pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
-                    
+
                     //xc = secp256k1->GetXHex(&pointBatchX[i], xC_len);
-                    xc = std::format("{:x}", pointBatchX[i].bits64[3]);                
+                    //xc = std::format("{:x}", pointBatchX[i].bits64[3]);
                     
-                    if (bf1.may_contain(xc)) {
+                    if (bf1.may_contain(pointBatchX[i].bits64[3])) {
                         
                         print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
                         
@@ -208,11 +209,11 @@ auto main() -> int {
                         for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
                             count = 0;
                             //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                            xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                            while (bf1.may_contain(xc_sup)) {
+                            //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
+                            while (bf1.may_contain(BloomP.x.bits64[3])) {
                                 BloomP = secp256k1->SubtractPoints(BloomP, p);
                                 //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                                xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
+                                //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
                                 count += 1;
                             }
                             privkey_num.push_back(pow10_nums[index] * (count - 1));
@@ -243,7 +244,7 @@ auto main() -> int {
                         print_time(); cout << "False Positive" << endl;
                     }
                     
-                    if (bf2.may_contain(xc)) {
+                    if (bf2.may_contain(pointBatchX[i].bits64[3])) {
                         
                         print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Lower Range Half]" << endl;
                         
@@ -257,11 +258,11 @@ auto main() -> int {
                         for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
                             count = 0;
                             //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                            xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                            while (bf2.may_contain(xc_sup)) {
+                            //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
+                            while (bf2.may_contain(BloomP.x.bits64[3])) {
                                 BloomP = secp256k1->SubtractPoints(BloomP, p);
                                 //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                                xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
+                                //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
                                 count += 1;
                             }
                             privkey_num.push_back(pow10_nums[index] * (count - 1));
@@ -384,7 +385,8 @@ auto main() -> int {
         auto scalable_subtraction_search = [&](Point starting_Point, int threadIdx, Int offset, Int stride_Sum) {
 
             Int stride_sum; stride_sum.Set(&stride_Sum);
-            string cpub, xc, xc_sup;
+            //string cpub, xc, xc_sup;
+            string cpub;
             int index, count;
             uint64_t steps;
             vector<uint64_t> privkey_num;
@@ -436,11 +438,11 @@ auto main() -> int {
                 pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
-                    
-                    //xc = secp256k1->GetXHex(&pointBatchX[i], xC_len);
-                    xc = std::format("{:x}", pointBatchX[i].bits64[3]);
 
-                    if (bf1.may_contain(xc)) {
+                    //xc = secp256k1->GetXHex(&pointBatchX[i], xC_len);
+                    //xc = std::format("{:x}", pointBatchX[i].bits64[3]);
+
+                    if (bf1.may_contain(pointBatchX[i].bits64[3])) {
                         
                         print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Higher Range Half]" << endl;
                         
@@ -454,11 +456,11 @@ auto main() -> int {
                         for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
                             count = 0;
                             //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                            xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                            while (bf1.may_contain(xc_sup)) {
+                            //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
+                            while (bf1.may_contain(BloomP.x.bits64[3])) {
                                 BloomP = secp256k1->SubtractPoints(BloomP, p);
                                 //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                                xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
+                                //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
                                 count += 1;
                             }
                             privkey_num.push_back(pow10_nums[index] * (count - 1));
@@ -489,7 +491,7 @@ auto main() -> int {
                         print_time(); cout << "False Positive" << endl;
                     }
                     
-                    if (bf2.may_contain(xc)) {
+                    if (bf2.may_contain(pointBatchX[i].bits64[3])) {
                         
                         print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Higher Range Half]" << endl;
                         
@@ -503,11 +505,11 @@ auto main() -> int {
                         for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
                             count = 0;
                             //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                            xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                            while (bf2.may_contain(xc_sup)) {
+                            //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
+                            while (bf2.may_contain(BloomP.x.bits64[3])) {
                                 BloomP = secp256k1->SubtractPoints(BloomP, p);
                                 //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                                xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
+                                //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
                                 count += 1;
                             }
                             privkey_num.push_back(pow10_nums[index] * (count - 1));
