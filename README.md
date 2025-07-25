@@ -55,5 +55,4 @@ Kali Linux Xfce(X11)
 [01:09:22] Private key: 910788673462129357
 [01:09:22] Elapsed time: (0)hours (0)minutes (6)seconds
 
-
 </pre>
