@@ -18,7 +18,7 @@ JLP Batch Reference Logic:
 - batch addition/subtraction
 - batch inversion
 - center of the group
-- calculating just x coordinate for the batch
+- calculating x coordinate for the batch
 - calculating x,y for the last of the batch entry (used as the next startPoint)
 
 point_search.cpp
