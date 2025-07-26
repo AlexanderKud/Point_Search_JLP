@@ -895,7 +895,7 @@ auto main() -> int {
                 stride_sum.Add(&batch_stride);
                 
             } // while (true) loop end curly brace
-        }; // scalable_subtraction_search_sav
+        }; // scalable_subtraction_search
         
         std::thread subtraction_Threads[cpuCores];
         
