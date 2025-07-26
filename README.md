@@ -29,31 +29,34 @@ point_search.cpp
 - bloom check by x coordinate uint64_t bits64[3] part, computing y coordinate only if there is a hit
 
 Kali Linux Xfce(X11)  
-┌──(alexander㉿kali)-[~/Documents/Point_Search_JLP_Test]
+┌┌──(alexander㉿kali)-[~/Documents/Point_Search_JLP]
 └─$ ./generate_bloom
-[00:53:53] P_table generated
-[00:53:53] Range Start: 59 bits
-[00:53:53] Range End  : 60 bits
-[00:53:53] Block Width: 2^30
-[00:53:53] Search Pub : 0386d42f693530d42401a660259c79a74796db05e1ebe8bef5727c535a1f45df80
-[00:53:53] Settings written to file
-[00:53:53] Creating bloomfilter images
-[01:07:49] Writing bloom2 image to bloom2.bf
-[01:07:57] Writing bloom1 image to bloom1.bf
-[01:08:58] Elapsed time: (0)hours (15)minutes (6)seconds
+[23:01:16] P_table generated
+[23:01:16] Range Start: 64 bits
+[23:01:16] Range End  : 65 bits
+[23:01:16] Block Width: 2^31
+[23:01:16] Search Pub : 03c7290b09537769fe749210c75bc592e127204ad8b677c79f3f0c51e73b2f6d8c
+[23:01:16] Settings written to file
+[23:01:16] Creating bloomfilter images
+[23:29:44] Writing bloom2 image to bloom2.bf
+[23:29:59] Writing bloom1 image to bloom1.bf
+[23:32:48] Elapsed time: (0)hours (31)minutes (32)seconds
                                                                                                                   
-┌──(alexander㉿kali)-[~/Documents/Point_Search_JLP_Test]
+┌──(alexander㉿kali)-[~/Documents/Point_Search_JLP]
 └─$ ./point_search  
-[01:09:09] S_table generated
-[01:09:09] Range Start: 59 bits
-[01:09:09] Range End  : 60 bits
-[01:09:09] Block Width: 2^30
-[01:09:09] Search Pub : 0386d42f693530d42401a660259c79a74796db05e1ebe8bef5727c535a1f45df80
-[01:09:09] Loading Bloomfilter images
-[01:09:16] Search in progress...
-[01:09:22] BloomFilter Hit bloom2.bf (Odd Point) [Higher Range Half]
-[01:09:22] Private key: 910788673462129357
-[01:09:22] Elapsed time: (0)hours (0)minutes (6)seconds
-
+[23:33:23] S_table generated
+[23:33:23] Range Start: 64 bits
+[23:33:23] Range End  : 65 bits
+[23:33:23] Block Width: 2^31
+[23:33:23] Search Pub : 03c7290b09537769fe749210c75bc592e127204ad8b677c79f3f0c51e73b2f6d8c
+[23:33:23] Loading Bloomfilter images
+[23:35:19] Search in progress...
+[23:37:25] Save Data written to settings2.txt
+[23:37:29] Save Data written to settings1.txt
+[23:37:57] BloomFilter Hit bloom1.bf (Even Point) [Lower Range Half]
+[23:37:57] False Positive
+[23:38:55] BloomFilter Hit bloom1.bf (Even Point) [Lower Range Half]
+[23:38:55] Private key: 24624325287185305508
+[23:38:55] Elapsed time: (0)hours (3)minutes (35)seconds
 
 </pre>
