@@ -44,19 +44,17 @@ Kali Linux Xfce(X11)
                                                                                                                   
 ┌──(alexander㉿kali)-[~/Documents/Point_Search_JLP]
 └─$ ./point_search  
-[23:33:23] S_table generated
-[23:33:23] Range Start: 64 bits
-[23:33:23] Range End  : 65 bits
-[23:33:23] Block Width: 2^31
-[23:33:23] Search Pub : 03c7290b09537769fe749210c75bc592e127204ad8b677c79f3f0c51e73b2f6d8c
-[23:33:23] Loading Bloomfilter images
-[23:35:19] Search in progress...
-[23:37:25] Save Data written to settings2.txt
-[23:37:29] Save Data written to settings1.txt
-[23:37:57] BloomFilter Hit bloom1.bf (Even Point) [Lower Range Half]
-[23:37:57] False Positive
-[23:38:55] BloomFilter Hit bloom1.bf (Even Point) [Lower Range Half]
-[23:38:55] Private key: 24624325287185305508
-[23:38:55] Elapsed time: (0)hours (3)minutes (35)seconds
+[00:01:24] S_table generated
+[00:01:24] Range Start: 64 bits
+[00:01:24] Range End  : 65 bits
+[00:01:24] Block Width: 2^31
+[00:01:24] Search Pub : 03c7290b09537769fe749210c75bc592e127204ad8b677c79f3f0c51e73b2f6d8c
+[00:01:24] Loading Bloomfilter images
+[00:03:33] Search in progress...
+[00:04:03] BloomFilter Hit bloom1.bf (Even Point) [Lower Range Half]
+[00:04:03] False Positive
+[00:05:01] BloomFilter Hit bloom1.bf (Even Point) [Lower Range Half]
+[00:05:01] Private key: 24624325287185305508
+[00:05:01] Elapsed time: (0)hours (1)minutes (27)seconds
 
 </pre>
