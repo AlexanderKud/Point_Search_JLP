@@ -56,5 +56,4 @@ Kali Linux Xfce(X11)
 [00:05:01] BloomFilter Hit bloom1.bf (Even Point) [Lower Range Half]
 [00:05:01] Private key: 24624325287185305508
 [00:05:01] Elapsed time: (0)hours (1)minutes (27)seconds
-
 </pre>
