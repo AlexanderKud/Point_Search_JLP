@@ -55,7 +55,7 @@ auto main() -> int {
     filter bf1, bf2;
     
     print_time(); cout << "Loading Bloomfilter images" << endl;
-    
+    /*
     std::ifstream in1(bloomfile1, std::ios::binary);
     std::size_t c1;
     in1.read((char*) &c1, sizeof(c1));
@@ -71,6 +71,32 @@ auto main() -> int {
     boost::span<unsigned char> s2 = bf2.array();
     in2.read((char*) s2.data(), s2.size()); // load array
     in2.close();
+    */
+    auto bloom1_load = [&]() {
+        std::ifstream in1(bloomfile1, std::ios::binary);
+        std::size_t c1;
+        in1.read((char*) &c1, sizeof(c1));
+        bf1.reset(c1); // restore capacity
+        boost::span<unsigned char> s1 = bf1.array();
+        in1.read((char*) s1.data(), s1.size()); // load array
+        in1.close();
+    };
+    
+    auto bloom2_load = [&]() {
+        std::ifstream in2(bloomfile2, std::ios::binary);
+        std::size_t c2;
+        in2.read((char*) &c2, sizeof(c2));
+        bf2.reset(c2); // restore capacity
+        boost::span<unsigned char> s2 = bf2.array();
+        in2.read((char*) s2.data(), s2.size()); // load array
+        in2.close();
+    };
+    
+    std::thread bloom_load_thread1(bloom1_load);
+    std::thread bloom_load_thread2(bloom2_load);
+    
+    bloom_load_thread1.join();
+    bloom_load_thread2.join();
     
     auto pow10_nums = break_down_to_pow10(uint64_t(pow(2, block_width))); // decomposing the 2^block_width to the power of ten values
     vector<Point> pow10_points;                                           // to get the offset from the target point based on the bloomfilter hits fast
@@ -101,7 +127,8 @@ auto main() -> int {
         //start splitting the search according to the chosen number of cpu cores
         Int offset_Step, int_Cores, vector_Num;
         int_Cores.SetInt32(cpuCores);
-        offset_Step.floor_Div(&S_table[range_start - 2], &int_Cores);
+        //offset_Step.floor_Div(&S_table[range_start - 2], &int_Cores);
+        offset_Step.floor_Div(&S_table[range_start - 3], &int_Cores);
         
         vector_Num.SetInt32(0);
         vector<Int> offset_Nums;
@@ -513,7 +540,8 @@ auto main() -> int {
         //start splitting the search according to the chosen number of cpu cores
         Int offset_Step, int_Cores, vector_Num;
         int_Cores.SetInt32(cpuCores);
-        offset_Step.floor_Div(&S_table[range_start - 2], &int_Cores);
+        //offset_Step.floor_Div(&S_table[range_start - 2], &int_Cores);
+        offset_Step.floor_Div(&S_table[range_start - 3], &int_Cores);
         
         vector_Num.SetInt32(0);
         vector<Int> offset_Nums;
