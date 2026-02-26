@@ -127,8 +127,7 @@ auto main() -> int {
         //start splitting the search according to the chosen number of cpu cores
         Int offset_Step, int_Cores, vector_Num;
         int_Cores.SetInt32(cpuCores);
-        //offset_Step.floor_Div(&S_table[range_start - 2], &int_Cores);
-        offset_Step.floor_Div(&S_table[range_start - 3], &int_Cores);
+        offset_Step.floor_Div(&S_table[range_start - 2], &int_Cores);
         
         vector_Num.SetInt32(0);
         vector<Int> offset_Nums;
@@ -328,7 +327,7 @@ auto main() -> int {
                 stride_sum.Add(&batch_stride);
                 save_counter += 1;
                 
-                if (save_counter % 100000 == 0) {
+                if (save_counter % 150000 == 0) {
                     cpub = secp256k1->GetPublicKeyHex(startPoint);
                     ofstream outFile;
                     outFile.open("settings1.txt");
@@ -540,8 +539,7 @@ auto main() -> int {
         //start splitting the search according to the chosen number of cpu cores
         Int offset_Step, int_Cores, vector_Num;
         int_Cores.SetInt32(cpuCores);
-        //offset_Step.floor_Div(&S_table[range_start - 2], &int_Cores);
-        offset_Step.floor_Div(&S_table[range_start - 3], &int_Cores);
+        offset_Step.floor_Div(&S_table[range_start - 2], &int_Cores);
         
         vector_Num.SetInt32(0);
         vector<Int> offset_Nums;
@@ -744,7 +742,7 @@ auto main() -> int {
                 stride_sum.Add(&batch_stride);
                 save_counter += 1; // all values are derived from this data after new program start
                 
-                if (save_counter % 100000 == 0) {
+                if (save_counter % 150000 == 0) {
                     cpub = secp256k1->GetPublicKeyHex(startPoint);
                     ofstream outFile;
                     outFile.open("settings2.txt");
