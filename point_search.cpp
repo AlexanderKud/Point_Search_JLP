@@ -78,14 +78,19 @@ auto main() -> int {
     bloom_load_thread2.join();
     
     auto pow10_nums = break_down_into_pow10(stride_bits); // decomposing the 2^block_width to the power of ten values
-    vector<Point> pow10_points;                           // to get the offset from the target point based on the bloomfilter hits fast
+    size_t arr_size = pow10_nums.size();                  // to get the offset from the target point based on the bloomfilter hits fast
+    Point pow10_points_Pos[arr_size];
+    Point pow10_points_Neg[arr_size];                           
     Int pow_key;
     Point Pm;
+    int arr_index = 0;
     for (auto& n : pow10_nums) { // calculating points corresponding to the decomposition components
         pow_key.SetInt64(n);
         Pm = secp256k1->ScalarMultiplication(&pow_key);
+        pow10_points_Pos[arr_index] = Pm;
         Pm.y.ModNeg();   
-        pow10_points.push_back(Pm);
+        pow10_points_Neg[arr_index] = Pm;
+        arr_index += 1;
     }
     
     auto chrono_start = std::chrono::high_resolution_clock::now();
@@ -248,11 +253,10 @@ auto main() -> int {
 
                             privkey_num.clear();
                             index = 0;
-                            for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
+                            for (size_t i = 0; i < arr_size; i++) { // getting the offset from the target point based on bloomfilter hits
                                 count = 0;
                                 do {
-                                    //BloomP = secp256k1->SubtractPoints(BloomP, p);
-                                    BloomP = secp256k1->AddPoints(BloomP, p);
+                                    BloomP = secp256k1->AddPoints(BloomP, pow10_points_Neg[i]);
                                     count += 1;
                                     in_bloom = true;
                                     for (int c = 0; c < iterations; c++) {
@@ -263,9 +267,7 @@ auto main() -> int {
                                     }
                                 } while(in_bloom);
                                 privkey_num.push_back(pow10_nums[index] * (count - 1));
-                                p.y.ModNeg();
-                                BloomP = secp256k1->AddPoints(BloomP, p);
-                                p.y.ModNeg();
+                                BloomP = secp256k1->AddPoints(BloomP, pow10_points_Pos[i]);
                                 index += 1;
                             }
                             
@@ -341,11 +343,10 @@ auto main() -> int {
                         
                             privkey_num.clear();
                             index = 0;
-                            for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
+                            for (size_t i = 0; i < arr_size; i++) { // getting the offset from the target point based on bloomfilter hits
                                 count = 0;
                                 do {
-                                    //BloomP = secp256k1->SubtractPoints(BloomP, p);
-                                    BloomP = secp256k1->AddPoints(BloomP, p);
+                                    BloomP = secp256k1->AddPoints(BloomP, pow10_points_Neg[i]);
                                     count += 1;
                                     in_bloom = true;
                                     for (int c = 0; c < iterations; c++) {
@@ -356,9 +357,7 @@ auto main() -> int {
                                     }
                                 } while(in_bloom);
                                 privkey_num.push_back(pow10_nums[index] * (count - 1));
-                                p.y.ModNeg();
-                                BloomP = secp256k1->AddPoints(BloomP, p);
-                                p.y.ModNeg();
+                                BloomP = secp256k1->AddPoints(BloomP, pow10_points_Pos[i]);
                                 index += 1;
                             }
                                               
@@ -512,11 +511,10 @@ auto main() -> int {
                         
                             privkey_num.clear();
                             index = 0;
-                            for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
+                            for (size_t i = 0; i < arr_size; i++) { // getting the offset from the target point based on bloomfilter hits
                                 count = 0;
                                 do {
-                                    //BloomP = secp256k1->SubtractPoints(BloomP, p);
-                                    BloomP = secp256k1->AddPoints(BloomP, p);
+                                    BloomP = secp256k1->AddPoints(BloomP, pow10_points_Neg[i]);
                                     count += 1;
                                     in_bloom = true;
                                     for (int c = 0; c < iterations; c++) {
@@ -527,9 +525,7 @@ auto main() -> int {
                                     }
                                 } while(in_bloom);
                                 privkey_num.push_back(pow10_nums[index] * (count - 1));
-                                p.y.ModNeg();
-                                BloomP = secp256k1->AddPoints(BloomP, p);
-                                p.y.ModNeg();
+                                BloomP = secp256k1->AddPoints(BloomP, pow10_points_Pos[i]);
                                 index += 1;
                             }
                             
@@ -605,11 +601,10 @@ auto main() -> int {
                         
                             privkey_num.clear();
                             index = 0;
-                            for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
+                            for (size_t i = 0; i < arr_size; i++) { // getting the offset from the target point based on bloomfilter hits
                                 count = 0;
                                 do {
-                                    //BloomP = secp256k1->SubtractPoints(BloomP, p);
-                                    BloomP = secp256k1->AddPoints(BloomP, p);
+                                    BloomP = secp256k1->AddPoints(BloomP, pow10_points_Neg[i]);
                                     count += 1;
                                     in_bloom = true;
                                     for (int c = 0; c < iterations; c++) {
@@ -620,9 +615,7 @@ auto main() -> int {
                                     }
                                 } while(in_bloom);
                                 privkey_num.push_back(pow10_nums[index] * (count - 1));
-                                p.y.ModNeg();
-                                BloomP = secp256k1->AddPoints(BloomP, p);
-                                p.y.ModNeg();
+                                BloomP = secp256k1->AddPoints(BloomP, pow10_points_Pos[i]);
                                 index += 1;
                             }
                                               
@@ -833,11 +826,10 @@ auto main() -> int {
                         
                             privkey_num.clear();
                             index = 0;
-                            for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
+                            for (size_t i = 0; i < arr_size; i++) { // getting the offset from the target point based on bloomfilter hits
                                 count = 0;
                                 do {
-                                    //BloomP = secp256k1->SubtractPoints(BloomP, p);
-                                    BloomP = secp256k1->AddPoints(BloomP, p);
+                                    BloomP = secp256k1->AddPoints(BloomP, pow10_points_Neg[i]);
                                     count += 1;
                                     in_bloom = true;
                                     for (int c = 0; c < iterations; c++) {
@@ -848,9 +840,7 @@ auto main() -> int {
                                     }
                                 } while(in_bloom);
                                 privkey_num.push_back(pow10_nums[index] * (count - 1));
-                                p.y.ModNeg();
-                                BloomP = secp256k1->AddPoints(BloomP, p);
-                                p.y.ModNeg();
+                                BloomP = secp256k1->AddPoints(BloomP, pow10_points_Pos[i]);
                                 index += 1;
                             }
                                                
@@ -926,11 +916,10 @@ auto main() -> int {
                         
                             privkey_num.clear();
                             index = 0;
-                            for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
+                            for (size_t i = 0; i < arr_size; i++) { // getting the offset from the target point based on bloomfilter hits
                                 count = 0;
                                 do {
-                                    //BloomP = secp256k1->SubtractPoints(BloomP, p);
-                                    BloomP = secp256k1->AddPoints(BloomP, p);
+                                    BloomP = secp256k1->AddPoints(BloomP, pow10_points_Neg[i]);
                                     count += 1;
                                     in_bloom = true;
                                     for (int c = 0; c < iterations; c++) {
@@ -941,9 +930,7 @@ auto main() -> int {
                                     }
                                 } while(in_bloom);
                                 privkey_num.push_back(pow10_nums[index] * (count - 1));
-                                p.y.ModNeg();
-                                BloomP = secp256k1->AddPoints(BloomP, p);
-                                p.y.ModNeg();
+                                BloomP = secp256k1->AddPoints(BloomP, pow10_points_Pos[i]);
                                 index += 1;
                             }
                             
@@ -1097,11 +1084,10 @@ auto main() -> int {
                         
                             privkey_num.clear();
                             index = 0;
-                            for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
+                            for (size_t i = 0; i < arr_size; i++) { // getting the offset from the target point based on bloomfilter hits
                                 count = 0;
                                 do {
-                                    //BloomP = secp256k1->SubtractPoints(BloomP, p);
-                                    BloomP = secp256k1->AddPoints(BloomP, p);
+                                    BloomP = secp256k1->AddPoints(BloomP, pow10_points_Neg[i]);
                                     count += 1;
                                     in_bloom = true;
                                     for (int c = 0; c < iterations; c++) {
@@ -1112,9 +1098,7 @@ auto main() -> int {
                                     }
                                 } while(in_bloom);
                                 privkey_num.push_back(pow10_nums[index] * (count - 1));
-                                p.y.ModNeg();
-                                BloomP = secp256k1->AddPoints(BloomP, p);
-                                p.y.ModNeg();
+                                BloomP = secp256k1->AddPoints(BloomP, pow10_points_Pos[i]);
                                 index += 1;
                             }
                                                
@@ -1190,11 +1174,10 @@ auto main() -> int {
                         
                             privkey_num.clear();
                             index = 0;
-                            for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
+                            for (size_t i = 0; i < arr_size; i++) { // getting the offset from the target point based on bloomfilter hits
                                 count = 0;
                                 do {
-                                    //BloomP = secp256k1->SubtractPoints(BloomP, p);
-                                    BloomP = secp256k1->AddPoints(BloomP, p);
+                                    BloomP = secp256k1->AddPoints(BloomP, pow10_points_Neg[i]);
                                     count += 1;
                                     in_bloom = true;
                                     for (int c = 0; c < iterations; c++) {
@@ -1205,9 +1188,7 @@ auto main() -> int {
                                     }
                                 } while(in_bloom);
                                 privkey_num.push_back(pow10_nums[index] * (count - 1));
-                                p.y.ModNeg();
-                                BloomP = secp256k1->AddPoints(BloomP, p);
-                                p.y.ModNeg();
+                                BloomP = secp256k1->AddPoints(BloomP, pow10_points_Pos[i]);
                                 index += 1;
                             }
                             
