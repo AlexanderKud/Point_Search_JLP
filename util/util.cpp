@@ -66,6 +66,7 @@ void print_elapsed_time(std::chrono::time_point<std::chrono::system_clock> start
 void set_bit(unsigned char *bloom, size_t pos) {
     bloom[pos >> 3] |= (1 << (pos & 7));
 }
+
 int check_bit(unsigned char *bloom, size_t pos) {
     return (bloom[pos >> 3] >> (pos & 7)) & 1;
 }
