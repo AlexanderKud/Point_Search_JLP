@@ -8,14 +8,12 @@ generate_bloom.cpp
 - batch inversion
 - calculating x coordinate for the batch - 1
 - calculating x,y for the last of the batch entry (used as the next startPoint)
-- bloom add x coordinate uint64_t bits64[3] part
 
 point_search.cpp
 - batch addition
 - batch inversion
 - calculating x coordinate for the batch - 1
 - calculating x,y for the last of the batch entry (used as the next startPoint)
-- bloom check by x coordinate uint64_t bits64[3] part, computing y coordinate only if there is a hit
 
 [alexander@alexander-manjaro Point_Search_JLP]$ ./generate_bloom
 [18:59:05] P_table generated
