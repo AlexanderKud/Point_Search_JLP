@@ -40,8 +40,11 @@ auto main() -> int {
     getline(inFile, temp); search_pub = trim(temp);
     inFile.close();
 
-    Point TargetP = secp256k1->ParsePublicKeyHex(search_pub);
-    
+    Point TargetP1 = secp256k1->ParsePublicKeyHex(search_pub);
+    Int d_05; d_05.SetBase10("57896044618658097711785492504343953926418782139537452191302581570759080747169");
+    Point point_05 = secp256k1->ScalarMultiplication(&d_05);
+    Point TargetP2 = secp256k1->AddPoints(TargetP1, point_05);
+
     print_time(); cout << "Range Start: " << range_start << " bits" << endl;
     print_time(); cout << "Range End  : " << range_end << " bits" << endl;
     print_time(); cout << "Block Width: 2^" << block_width << endl;
@@ -221,7 +224,7 @@ auto main() -> int {
                         BloomP.y.ModMulK1(&slope[i], &BloomP.y);
                         BloomP.y.ModSub(&BloomP.y, &startPoint.y);
 
-                        if (BloomP.x_equals(TargetP)) {
+                        if (BloomP.x_equals(TargetP1)) {
                             Int_steps.SetInt64(0); // restoring the private key
                             batch_index.Mult(&stride, uint64_t(i + 1));
                             Int_temp.Add(&stride_sum, &batch_index);
@@ -310,7 +313,7 @@ auto main() -> int {
                         BloomP.y.ModMulK1(&slope[i], &BloomP.y);
                         BloomP.y.ModSub(&BloomP.y, &startPoint.y);
 
-                        if (BloomP.x_equals(TargetP)) {
+                        if (BloomP.x_equals(TargetP2)) {
                             Int_steps.SetInt64(0); // restoring the private key
                             batch_index.Mult(&stride, uint64_t(i + 1));
                             Int_temp.Add(&stride_sum, &batch_index);
@@ -393,7 +396,7 @@ auto main() -> int {
                 stride_sum.Add(&batch_stride);
                 save_counter += 1;
                 
-                if (save_counter % 250000 == 0) {
+                if (save_counter % 300000 == 0) {
                     cpub = secp256k1->GetPublicKeyHex(startPoint);
                     ofstream outFile;
                     outFile.open("settings1.txt");
@@ -479,7 +482,7 @@ auto main() -> int {
                         BloomP.y.ModMulK1(&slope[i], &BloomP.y);
                         BloomP.y.ModSub(&BloomP.y, &startPoint.y);
 
-                        if (BloomP.x_equals(TargetP)) {
+                        if (BloomP.x_equals(TargetP1)) {
                             Int_steps.SetInt64(0); // restoring the private key
                             batch_index.Mult(&stride, uint64_t(i + 1));
                             Int_temp.Add(&stride_sum, &batch_index);
@@ -568,7 +571,7 @@ auto main() -> int {
                         BloomP.y.ModMulK1(&slope[i], &BloomP.y);
                         BloomP.y.ModSub(&BloomP.y, &startPoint.y);
 
-                        if (BloomP.x_equals(TargetP)) {
+                        if (BloomP.x_equals(TargetP2)) {
                             Int_steps.SetInt64(0); // restoring the private key
                             batch_index.Mult(&stride, uint64_t(i + 1));
                             Int_temp.Add(&stride_sum, &batch_index);
@@ -794,7 +797,7 @@ auto main() -> int {
                         BloomP.y.ModMulK1(&slope[i], &BloomP.y);
                         BloomP.y.ModSub(&BloomP.y, &startPoint.y);
 
-                        if (BloomP.x_equals(TargetP)) {
+                        if (BloomP.x_equals(TargetP1)) {
                             Int_steps.SetInt64(0); // restoring the private key
                             batch_index.Mult(&stride, uint64_t(i + 1));
                             Int_temp.Add(&stride_sum, &batch_index);                        
@@ -883,7 +886,7 @@ auto main() -> int {
                         BloomP.y.ModMulK1(&slope[i], &BloomP.y);
                         BloomP.y.ModSub(&BloomP.y, &startPoint.y);
 
-                        if (BloomP.x_equals(TargetP)) {
+                        if (BloomP.x_equals(TargetP2)) {
                             Int_steps.SetInt64(0); // restoring the private key
                             batch_index.Mult(&stride, uint64_t(i + 1));
                             Int_temp.Add(&stride_sum, &batch_index);                        
@@ -966,7 +969,7 @@ auto main() -> int {
                 stride_sum.Add(&batch_stride);
                 save_counter += 1; // all values are derived from this data after new program start
                 
-                if (save_counter % 250000 == 0) {
+                if (save_counter % 300000 == 0) {
                     cpub = secp256k1->GetPublicKeyHex(startPoint);
                     ofstream outFile;
                     outFile.open("settings2.txt");
@@ -1052,7 +1055,7 @@ auto main() -> int {
                         BloomP.y.ModMulK1(&slope[i], &BloomP.y);
                         BloomP.y.ModSub(&BloomP.y, &startPoint.y);
 
-                        if (BloomP.x_equals(TargetP)) {
+                        if (BloomP.x_equals(TargetP1)) {
                             Int_steps.SetInt64(0); // restoring the private key
                             batch_index.Mult(&stride, uint64_t(i + 1));
                             Int_temp.Add(&stride_sum, &batch_index);                        
@@ -1141,7 +1144,7 @@ auto main() -> int {
                         BloomP.y.ModMulK1(&slope[i], &BloomP.y);
                         BloomP.y.ModSub(&BloomP.y, &startPoint.y);
 
-                        if (BloomP.x_equals(TargetP)) {
+                        if (BloomP.x_equals(TargetP2)) {
                             Int_steps.SetInt64(0); // restoring the private key
                             batch_index.Mult(&stride, uint64_t(i + 1));
                             Int_temp.Add(&stride_sum, &batch_index);                        
