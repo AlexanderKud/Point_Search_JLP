@@ -54,6 +54,10 @@ void Point::Reduce() {
 
 }
 
+bool Point::x_equals(Point &p) {
+  return x.IsEqual(&p.x);
+}
+
 bool Point::equals(Point &p) {
   return x.IsEqual(&p.x) && y.IsEqual(&p.y) && z.IsEqual(&p.z);
 }

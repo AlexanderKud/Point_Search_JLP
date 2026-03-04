@@ -13,6 +13,7 @@ public:
   Point(const Point &p);
   ~Point();
   bool isZero();
+  bool x_equals(Point &p);
   bool equals(Point &p);
   bool equals2(Point &p);
   void Set(Point &p);

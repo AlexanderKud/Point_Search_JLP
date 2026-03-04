@@ -2,25 +2,24 @@
 #include <fstream>
 #include <vector>
 #include <thread>
-//#include <format>
+#include <cmath>
 
 #include "secp256k1/SECP256k1.h"
 #include "secp256k1/Int.h"
 #include "secp256k1/IntGroup.h"
-#include "bloom/filter.hpp"
 #include "util/util.h"
 
 using namespace std;
-using filter = boost::bloom::filter<boost::uint64_t, 32>;
 
 const int cpuCores = std::thread::hardware_concurrency(); // actual number of processing cores
-//const int xC_len = 10; // X coordinate length to be checked for being inserted into the bloomfilter (should be the same for generate_bloom and point_search max=33(full length X coordinate))
-
 static constexpr int POINTS_BATCH_SIZE = 1024; // Batch addition with batch inversion using IntGroup class
 
 auto main() -> int {
 
     Secp256K1* secp256k1 = new Secp256K1(); secp256k1->Init(); // initialize secp256k1 context
+
+    Int gm; gm.SetBase16("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140");
+    Point Gm = secp256k1->ScalarMultiplication(&gm);
     
     Int pk; pk.SetInt32(1); // generating power of two values (2^0..2^256) table
     uint64_t mult = 2;
@@ -40,6 +39,8 @@ auto main() -> int {
     getline(inFile, temp); block_width = std::stoull(temp);
     getline(inFile, temp); search_pub = trim(temp);
     inFile.close();
+
+    Point TargetP = secp256k1->ParsePublicKeyHex(search_pub);
     
     print_time(); cout << "Range Start: " << range_start << " bits" << endl;
     print_time(); cout << "Range End  : " << range_end << " bits" << endl;
@@ -49,47 +50,25 @@ auto main() -> int {
     Int pre_calc_sum; // precalculated sum for private key recovering 512 + 256 = 768 for range[2^10..2^11] 1288 in example
     pre_calc_sum.Add(&S_table[range_start - 1], &S_table[range_start - 2]);
     uint64_t stride_bits = pow(2, block_width);
-    
-    string bloomfile1 = "bloom1.bf";
-    string bloomfile2 = "bloom2.bf";
-    filter bf1, bf2;
-    
-    print_time(); cout << "Loading Bloomfilter images" << endl;
-    /*
-    std::ifstream in1(bloomfile1, std::ios::binary);
-    std::size_t c1;
-    in1.read((char*) &c1, sizeof(c1));
-    bf1.reset(c1); // restore capacity
-    boost::span<unsigned char> s1 = bf1.array();
-    in1.read((char*) s1.data(), s1.size()); // load array
-    in1.close();
 
-    std::ifstream in2(bloomfile2, std::ios::binary);
-    std::size_t c2;
-    in2.read((char*) &c2, sizeof(c2));
-    bf2.reset(c2); // restore capacity
-    boost::span<unsigned char> s2 = bf2.array();
-    in2.read((char*) s2.data(), s2.size()); // load array
-    in2.close();
-    */
+    uint64_t bloom_size = stride_bits * 4;
+    uint64_t bloom_pos = bloom_size * 8;
+    int iterations = 4;
+    
+    char * bloomfile1 = "bloom1.bf";
+    char * bloomfile2 = "bloom2.bf";
+
+    unsigned char * bloom1 = (unsigned char *)calloc(bloom_size, sizeof(unsigned char));
+    unsigned char * bloom2 = (unsigned char *)calloc(bloom_size, sizeof(unsigned char));
+
+    print_time(); cout << "Loading Bloomfilter images" << endl;
+   
     auto bloom1_load = [&]() {
-        std::ifstream in1(bloomfile1, std::ios::binary);
-        std::size_t c1;
-        in1.read((char*) &c1, sizeof(c1));
-        bf1.reset(c1); // restore capacity
-        boost::span<unsigned char> s1 = bf1.array();
-        in1.read((char*) s1.data(), s1.size()); // load array
-        in1.close();
+        load_bloom_filter(bloomfile1, bloom1, bloom_size);
     };
     
     auto bloom2_load = [&]() {
-        std::ifstream in2(bloomfile2, std::ios::binary);
-        std::size_t c2;
-        in2.read((char*) &c2, sizeof(c2));
-        bf2.reset(c2); // restore capacity
-        boost::span<unsigned char> s2 = bf2.array();
-        in2.read((char*) s2.data(), s2.size()); // load array
-        in2.close();
+        load_bloom_filter(bloomfile2, bloom2, bloom_size);
     };
     
     std::thread bloom_load_thread1(bloom1_load);
@@ -98,12 +77,15 @@ auto main() -> int {
     bloom_load_thread1.join();
     bloom_load_thread2.join();
     
-    auto pow10_nums = break_down_to_pow10(uint64_t(pow(2, block_width))); // decomposing the 2^block_width to the power of ten values
-    vector<Point> pow10_points;                                           // to get the offset from the target point based on the bloomfilter hits fast
+    auto pow10_nums = break_down_into_pow10(stride_bits); // decomposing the 2^block_width to the power of ten values
+    vector<Point> pow10_points;                           // to get the offset from the target point based on the bloomfilter hits fast
     Int pow_key;
+    Point Pm;
     for (auto& n : pow10_nums) { // calculating points corresponding to the decomposition components
-        pow_key.SetInt64(n);     
-        pow10_points.push_back(secp256k1->ScalarMultiplication(&pow_key));
+        pow_key.SetInt64(n);
+        Pm = secp256k1->ScalarMultiplication(&pow_key);
+        Pm.y.ModNeg();   
+        pow10_points.push_back(Pm);
     }
     
     auto chrono_start = std::chrono::high_resolution_clock::now();
@@ -165,7 +147,6 @@ auto main() -> int {
 
             Int stride_sum; stride_sum.Set(&stride_Sum);
             Int Int_steps, Int_temp, privkey;
-            //string cpub, xc, xc_sup;
             string cpub;
             int index, count;
             uint64_t steps;
@@ -181,9 +162,11 @@ auto main() -> int {
             
             Point startPoint = starting_Point; // start point
             Point BloomP; // point for insertion of the batch into the bloomfilter
+            Point CheckP;
         
             Int batch_stride, batch_index;
             batch_stride.Mult(&stride, uint64_t(POINTS_BATCH_SIZE));
+            bool in_bloom;
         
             while (true) {
 
@@ -218,47 +201,31 @@ auto main() -> int {
 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
 
-                    //xc = secp256k1->GetXHex(&pointBatchX[i], xC_len);
-                    //xc = std::format("{:x}", pointBatchX[i].bits64[3]);
-                    
-                    if (bf1.may_contain(pointBatchX[i].bits64[3])) {
-                        
-                        print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
+                    in_bloom = true;
+                    for (int a = 0; a < iterations; a++) {
+                        if (!check_bit(bloom1, pointBatchX[i].bits64[a] % bloom_pos)) {
+                            in_bloom = false;
+                            break;
+                        }
+                    }
+
+                    if (in_bloom) {
                         
                         BloomP.x.Set(&pointBatchX[i]);
                         BloomP.y.ModSub(&startPoint.x, &pointBatchX[i]);
                         BloomP.y.ModMulK1(&slope[i], &BloomP.y);
                         BloomP.y.ModSub(&BloomP.y, &startPoint.y);
-                        
-                        privkey_num.clear();
-                        index = 0;
-                        for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
-                            count = 0;
-                            //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                            //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                            while (bf1.may_contain(BloomP.x.bits64[3])) {
-                                BloomP = secp256k1->SubtractPoints(BloomP, p);
-                                //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                                //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                                count += 1;
-                            }
-                            privkey_num.push_back(pow10_nums[index] * (count - 1));
-                            BloomP = secp256k1->AddPoints(BloomP, p);
-                            index += 1;
-                        }
-                        
-                        steps = 0;
-                        for (auto& n : privkey_num) { steps += n; } // we got here the offset
-                        Int_steps.SetInt64(steps); // restoring the private key
-                        batch_index.Mult(&stride, uint64_t(i + 1));
-                        Int_temp.Add(&stride_sum, &batch_index);
-                        Int_temp.Add(&offset);
-                        Int_temp.Sub(&Int_steps);
-                        privkey.Sub(&pre_calc_sum, &Int_temp);
-                        privkey.Mult(mult); // we got here the private key
-                        calc_point = secp256k1->ScalarMultiplication(&privkey);
-                        
-                        if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+
+                        if (BloomP.x_equals(TargetP)) {
+                            Int_steps.SetInt64(0); // restoring the private key
+                            batch_index.Mult(&stride, uint64_t(i + 1));
+                            Int_temp.Add(&stride_sum, &batch_index);
+                            Int_temp.Add(&offset);
+                            Int_temp.Sub(&Int_steps);
+                            privkey.Sub(&pre_calc_sum, &Int_temp);
+                            privkey.Mult(mult); // we got here the private key
+                            
+                            print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
                             print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
                             outFile.open("found.txt", ios::app);
@@ -267,48 +234,91 @@ auto main() -> int {
                             print_elapsed_time(chrono_start);
                             exit(0);
                         }
-                        print_time(); cout << "False Positive" << endl;
+
+                        CheckP = secp256k1->AddPoints(BloomP, Gm);
+                        in_bloom = true;
+                        for (int a = 0; a < iterations; a++) {
+                            if (!check_bit(bloom1, CheckP.x.bits64[a] % bloom_pos)) {
+                                in_bloom = false;
+                                break;
+                            }
+                        }
+                        
+                        if (in_bloom) {
+
+                            privkey_num.clear();
+                            index = 0;
+                            for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
+                                count = 0;
+                                do {
+                                    //BloomP = secp256k1->SubtractPoints(BloomP, p);
+                                    BloomP = secp256k1->AddPoints(BloomP, p);
+                                    count += 1;
+                                    in_bloom = true;
+                                    for (int c = 0; c < iterations; c++) {
+                                        if (!check_bit(bloom1, BloomP.x.bits64[c] % bloom_pos)) {
+                                            in_bloom = false;
+                                            break;
+                                        } 
+                                    }
+                                } while(in_bloom);
+                                privkey_num.push_back(pow10_nums[index] * (count - 1));
+                                p.y.ModNeg();
+                                BloomP = secp256k1->AddPoints(BloomP, p);
+                                p.y.ModNeg();
+                                index += 1;
+                            }
+                            
+                            steps = 0;
+                            for (auto& n : privkey_num) { steps += n; } // we got here the offset
+                            Int_steps.SetInt64(steps); // restoring the private key
+                            batch_index.Mult(&stride, uint64_t(i + 1));
+                            Int_temp.Add(&stride_sum, &batch_index);
+                            Int_temp.Add(&offset);
+                            Int_temp.Sub(&Int_steps);
+                            privkey.Sub(&pre_calc_sum, &Int_temp);
+                            privkey.Mult(mult); // we got here the private key
+                            calc_point = secp256k1->ScalarMultiplication(&privkey);
+                            
+                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                                print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
+                                print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
+                                ofstream outFile;
+                                outFile.open("found.txt", ios::app);
+                                outFile << privkey.GetBase10() << '\n';
+                                outFile.close();
+                                print_elapsed_time(chrono_start);
+                                exit(0);
+                            }
+                        }
+                    }
+
+                    in_bloom = true;
+                    for (int b = 0; b < iterations; b++) {
+                        if (!check_bit(bloom2, pointBatchX[i].bits64[b] % bloom_pos)) {
+                            in_bloom = false;
+                            break;
+                        }
                     }
                     
-                    if (bf2.may_contain(pointBatchX[i].bits64[3])) {
-                        
-                        print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Lower Range Half]" << endl;
+                    if (in_bloom) {
                         
                         BloomP.x.Set(&pointBatchX[i]);
                         BloomP.y.ModSub(&startPoint.x, &pointBatchX[i]);
                         BloomP.y.ModMulK1(&slope[i], &BloomP.y);
                         BloomP.y.ModSub(&BloomP.y, &startPoint.y);
-                        
-                        privkey_num.clear();
-                        index = 0;
-                        for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
-                            count = 0;
-                            //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                            //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                            while (bf2.may_contain(BloomP.x.bits64[3])) {
-                                BloomP = secp256k1->SubtractPoints(BloomP, p);
-                                //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                                //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                                count += 1;
-                            }
-                            privkey_num.push_back(pow10_nums[index] * (count - 1));
-                            BloomP = secp256k1->AddPoints(BloomP, p);
-                            index += 1;
-                        }
-                                          
-                        steps = 0;
-                        for (auto& n : privkey_num) { steps += n; } // we got here the offset
-                        Int_steps.SetInt64(steps); // restoring the private key
-                        batch_index.Mult(&stride, uint64_t(i + 1));
-                        Int_temp.Add(&stride_sum, &batch_index);
-                        Int_temp.Add(&offset);
-                        Int_temp.Sub(&Int_steps);
-                        privkey.Sub(&pre_calc_sum, &Int_temp);
-                        privkey.Mult(mult);
-                        privkey.AddOne(); // we got here the private key
-                        calc_point = secp256k1->ScalarMultiplication(&privkey);
-                        
-                        if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+
+                        if (BloomP.x_equals(TargetP)) {
+                            Int_steps.SetInt64(0); // restoring the private key
+                            batch_index.Mult(&stride, uint64_t(i + 1));
+                            Int_temp.Add(&stride_sum, &batch_index);
+                            Int_temp.Add(&offset);
+                            Int_temp.Sub(&Int_steps);
+                            privkey.Sub(&pre_calc_sum, &Int_temp);
+                            privkey.Mult(mult);
+                            privkey.AddOne(); // we got here the private key
+                            
+                            print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Lower Range Half]" << endl;
                             print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
                             outFile.open("found.txt", ios::app);
@@ -317,7 +327,64 @@ auto main() -> int {
                             print_elapsed_time(chrono_start);
                             exit(0);
                         }
-                        print_time(); cout << "False Positive" << endl; 
+
+                        CheckP = secp256k1->AddPoints(BloomP, Gm);
+                        in_bloom = true;
+                        for (int a = 0; a < iterations; a++) {
+                            if (!check_bit(bloom2, CheckP.x.bits64[a] % bloom_pos)) {
+                                in_bloom = false;
+                                break;
+                            }
+                        }
+
+                        if (in_bloom) {
+                        
+                            privkey_num.clear();
+                            index = 0;
+                            for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
+                                count = 0;
+                                do {
+                                    //BloomP = secp256k1->SubtractPoints(BloomP, p);
+                                    BloomP = secp256k1->AddPoints(BloomP, p);
+                                    count += 1;
+                                    in_bloom = true;
+                                    for (int c = 0; c < iterations; c++) {
+                                        if (!check_bit(bloom2, BloomP.x.bits64[c] % bloom_pos)) {
+                                            in_bloom = false;
+                                            break;
+                                        } 
+                                    }
+                                } while(in_bloom);
+                                privkey_num.push_back(pow10_nums[index] * (count - 1));
+                                p.y.ModNeg();
+                                BloomP = secp256k1->AddPoints(BloomP, p);
+                                p.y.ModNeg();
+                                index += 1;
+                            }
+                                              
+                            steps = 0;
+                            for (auto& n : privkey_num) { steps += n; } // we got here the offset
+                            Int_steps.SetInt64(steps); // restoring the private key
+                            batch_index.Mult(&stride, uint64_t(i + 1));
+                            Int_temp.Add(&stride_sum, &batch_index);
+                            Int_temp.Add(&offset);
+                            Int_temp.Sub(&Int_steps);
+                            privkey.Sub(&pre_calc_sum, &Int_temp);
+                            privkey.Mult(mult);
+                            privkey.AddOne(); // we got here the private key
+                            calc_point = secp256k1->ScalarMultiplication(&privkey);
+                            
+                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                                print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Lower Range Half]" << endl;
+                                print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
+                                ofstream outFile;
+                                outFile.open("found.txt", ios::app);
+                                outFile << privkey.GetBase10() << '\n';
+                                outFile.close();
+                                print_elapsed_time(chrono_start);
+                                exit(0);
+                            }
+                        }
                     }
                 }
                 
@@ -327,7 +394,7 @@ auto main() -> int {
                 stride_sum.Add(&batch_stride);
                 save_counter += 1;
                 
-                if (save_counter % 150000 == 0) {
+                if (save_counter % 250000 == 0) {
                     cpub = secp256k1->GetPublicKeyHex(startPoint);
                     ofstream outFile;
                     outFile.open("settings1.txt");
@@ -344,7 +411,6 @@ auto main() -> int {
 
             Int stride_sum; stride_sum.Set(&stride_Sum);
             Int Int_steps, Int_temp, privkey;
-            //string cpub, xc, xc_sup;
             string cpub;
             int index, count;
             uint64_t steps;
@@ -360,9 +426,11 @@ auto main() -> int {
             
             Point startPoint = starting_Point; // start point
             Point BloomP; // point for insertion of the batch into the bloomfilter
+            Point CheckP;
         
             Int batch_stride, batch_index;
             batch_stride.Mult(&stride, uint64_t(POINTS_BATCH_SIZE));
+            bool in_bloom;
         
             while (true) {
 
@@ -396,48 +464,32 @@ auto main() -> int {
                 pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
-
-                    //xc = secp256k1->GetXHex(&pointBatchX[i], xC_len);
-                    //xc = std::format("{:x}", pointBatchX[i].bits64[3]);
                     
-                    if (bf1.may_contain(pointBatchX[i].bits64[3])) {
-                        
-                        print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
+                    in_bloom = true;
+                    for (int a = 0; a < iterations; a++) {
+                        if (!check_bit(bloom1, pointBatchX[i].bits64[a] % bloom_pos)) {
+                            in_bloom = false;
+                            break;
+                        }
+                    }
+
+                    if (in_bloom) {
                         
                         BloomP.x.Set(&pointBatchX[i]);
                         BloomP.y.ModSub(&startPoint.x, &pointBatchX[i]);
                         BloomP.y.ModMulK1(&slope[i], &BloomP.y);
                         BloomP.y.ModSub(&BloomP.y, &startPoint.y);
-                        
-                        privkey_num.clear();
-                        index = 0;
-                        for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
-                            count = 0;
-                            //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                            //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                            while (bf1.may_contain(BloomP.x.bits64[3])) {
-                                BloomP = secp256k1->SubtractPoints(BloomP, p);
-                                //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                                //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                                count += 1;
-                            }
-                            privkey_num.push_back(pow10_nums[index] * (count - 1));
-                            BloomP = secp256k1->AddPoints(BloomP, p);
-                            index += 1;
-                        }
-                        
-                        steps = 0;
-                        for (auto& n : privkey_num) { steps += n; } // we got here the offset
-                        Int_steps.SetInt64(steps); // restoring the private key
-                        batch_index.Mult(&stride, uint64_t(i + 1));
-                        Int_temp.Add(&stride_sum, &batch_index);
-                        Int_temp.Add(&offset);
-                        Int_temp.Sub(&Int_steps);
-                        privkey.Sub(&pre_calc_sum, &Int_temp);
-                        privkey.Mult(mult); // we got here the private key
-                        calc_point = secp256k1->ScalarMultiplication(&privkey);
-                        
-                        if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+
+                        if (BloomP.x_equals(TargetP)) {
+                            Int_steps.SetInt64(0); // restoring the private key
+                            batch_index.Mult(&stride, uint64_t(i + 1));
+                            Int_temp.Add(&stride_sum, &batch_index);
+                            Int_temp.Add(&offset);
+                            Int_temp.Sub(&Int_steps);
+                            privkey.Sub(&pre_calc_sum, &Int_temp);
+                            privkey.Mult(mult); // we got here the private key
+                            
+                            print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
                             print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
                             outFile.open("found.txt", ios::app);
@@ -446,48 +498,91 @@ auto main() -> int {
                             print_elapsed_time(chrono_start);
                             exit(0);
                         }
-                        print_time(); cout << "False Positive" << endl;
+
+                        CheckP = secp256k1->AddPoints(BloomP, Gm);
+                        in_bloom = true;
+                        for (int a = 0; a < iterations; a++) {
+                            if (!check_bit(bloom1, CheckP.x.bits64[a] % bloom_pos)) {
+                                in_bloom = false;
+                                break;
+                            }
+                        }
+
+                        if (in_bloom) {
+                        
+                            privkey_num.clear();
+                            index = 0;
+                            for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
+                                count = 0;
+                                do {
+                                    //BloomP = secp256k1->SubtractPoints(BloomP, p);
+                                    BloomP = secp256k1->AddPoints(BloomP, p);
+                                    count += 1;
+                                    in_bloom = true;
+                                    for (int c = 0; c < iterations; c++) {
+                                        if (!check_bit(bloom1, BloomP.x.bits64[c] % bloom_pos)) {
+                                            in_bloom = false;
+                                            break;
+                                        } 
+                                    }
+                                } while(in_bloom);
+                                privkey_num.push_back(pow10_nums[index] * (count - 1));
+                                p.y.ModNeg();
+                                BloomP = secp256k1->AddPoints(BloomP, p);
+                                p.y.ModNeg();
+                                index += 1;
+                            }
+                            
+                            steps = 0;
+                            for (auto& n : privkey_num) { steps += n; } // we got here the offset
+                            Int_steps.SetInt64(steps); // restoring the private key
+                            batch_index.Mult(&stride, uint64_t(i + 1));
+                            Int_temp.Add(&stride_sum, &batch_index);
+                            Int_temp.Add(&offset);
+                            Int_temp.Sub(&Int_steps);
+                            privkey.Sub(&pre_calc_sum, &Int_temp);
+                            privkey.Mult(mult); // we got here the private key
+                            calc_point = secp256k1->ScalarMultiplication(&privkey);
+                            
+                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                                print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
+                                print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
+                                ofstream outFile;
+                                outFile.open("found.txt", ios::app);
+                                outFile << privkey.GetBase10() << '\n';
+                                outFile.close();
+                                print_elapsed_time(chrono_start);
+                                exit(0);
+                            }
+                        }
+                    }
+
+                    in_bloom = true;
+                    for (int b = 0; b < iterations; b++) {
+                        if (!check_bit(bloom2, pointBatchX[i].bits64[b] % bloom_pos)) {
+                            in_bloom = false;
+                            break;
+                        }
                     }
                     
-                    if (bf2.may_contain(pointBatchX[i].bits64[3])) {
-                        
-                        print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Lower Range Half]" << endl;
+                    if (in_bloom) {
                         
                         BloomP.x.Set(&pointBatchX[i]);
                         BloomP.y.ModSub(&startPoint.x, &pointBatchX[i]);
                         BloomP.y.ModMulK1(&slope[i], &BloomP.y);
                         BloomP.y.ModSub(&BloomP.y, &startPoint.y);
-                        
-                        privkey_num.clear();
-                        index = 0;
-                        for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
-                            count = 0;
-                            //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                            //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                            while (bf2.may_contain(BloomP.x.bits64[3])) {
-                                BloomP = secp256k1->SubtractPoints(BloomP, p);
-                                //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                                //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                                count += 1;
-                            }
-                            privkey_num.push_back(pow10_nums[index] * (count - 1));
-                            BloomP = secp256k1->AddPoints(BloomP, p);
-                            index += 1;
-                        }
-                                          
-                        steps = 0;
-                        for (auto& n : privkey_num) { steps += n; } // we got here the offset
-                        Int_steps.SetInt64(steps); // restoring the private key
-                        batch_index.Mult(&stride, uint64_t(i + 1));
-                        Int_temp.Add(&stride_sum, &batch_index);
-                        Int_temp.Add(&offset);
-                        Int_temp.Sub(&Int_steps);
-                        privkey.Sub(&pre_calc_sum, &Int_temp);
-                        privkey.Mult(mult);
-                        privkey.AddOne(); // we got here the private key
-                        calc_point = secp256k1->ScalarMultiplication(&privkey);
-                        
-                        if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+
+                        if (BloomP.x_equals(TargetP)) {
+                            Int_steps.SetInt64(0); // restoring the private key
+                            batch_index.Mult(&stride, uint64_t(i + 1));
+                            Int_temp.Add(&stride_sum, &batch_index);
+                            Int_temp.Add(&offset);
+                            Int_temp.Sub(&Int_steps);
+                            privkey.Sub(&pre_calc_sum, &Int_temp);
+                            privkey.Mult(mult);
+                            privkey.AddOne(); // we got here the private key
+                            
+                            print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Lower Range Half]" << endl;
                             print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
                             outFile.open("found.txt", ios::app);
@@ -496,7 +591,64 @@ auto main() -> int {
                             print_elapsed_time(chrono_start);
                             exit(0);
                         }
-                        print_time(); cout << "False Positive" << endl; 
+
+                        CheckP = secp256k1->AddPoints(BloomP, Gm);
+                        in_bloom = true;
+                        for (int a = 0; a < iterations; a++) {
+                            if (!check_bit(bloom2, CheckP.x.bits64[a] % bloom_pos)) {
+                                in_bloom = false;
+                                break;
+                            }
+                        }
+
+                        if (in_bloom) {
+                        
+                            privkey_num.clear();
+                            index = 0;
+                            for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
+                                count = 0;
+                                do {
+                                    //BloomP = secp256k1->SubtractPoints(BloomP, p);
+                                    BloomP = secp256k1->AddPoints(BloomP, p);
+                                    count += 1;
+                                    in_bloom = true;
+                                    for (int c = 0; c < iterations; c++) {
+                                        if (!check_bit(bloom2, BloomP.x.bits64[c] % bloom_pos)) {
+                                            in_bloom = false;
+                                            break;
+                                        } 
+                                    }
+                                } while(in_bloom);
+                                privkey_num.push_back(pow10_nums[index] * (count - 1));
+                                p.y.ModNeg();
+                                BloomP = secp256k1->AddPoints(BloomP, p);
+                                p.y.ModNeg();
+                                index += 1;
+                            }
+                                              
+                            steps = 0;
+                            for (auto& n : privkey_num) { steps += n; } // we got here the offset
+                            Int_steps.SetInt64(steps); // restoring the private key
+                            batch_index.Mult(&stride, uint64_t(i + 1));
+                            Int_temp.Add(&stride_sum, &batch_index);
+                            Int_temp.Add(&offset);
+                            Int_temp.Sub(&Int_steps);
+                            privkey.Sub(&pre_calc_sum, &Int_temp);
+                            privkey.Mult(mult);
+                            privkey.AddOne(); // we got here the private key
+                            calc_point = secp256k1->ScalarMultiplication(&privkey);
+                            
+                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                                print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Lower Range Half]" << endl;
+                                print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
+                                ofstream outFile;
+                                outFile.open("found.txt", ios::app);
+                                outFile << privkey.GetBase10() << '\n';
+                                outFile.close();
+                                print_elapsed_time(chrono_start);
+                                exit(0);
+                            } 
+                        }
                     }
                 }
                 
@@ -579,7 +731,6 @@ auto main() -> int {
         auto scalable_subtraction_search_save = [&](Point starting_Point, Int offset, Int stride_Sum) {
 
             Int stride_sum; stride_sum.Set(&stride_Sum);
-            //string cpub, xc, xc_sup;
             string cpub;
             int index, count;
             uint64_t steps;
@@ -596,9 +747,11 @@ auto main() -> int {
             
             Point startPoint = starting_Point; // start point
             Point BloomP; // point for insertion of the batch into the bloomfilter
+            Point CheckP;
             
             Int batch_stride, batch_index;
             batch_stride.Mult(&stride, uint64_t(POINTS_BATCH_SIZE));
+            bool in_bloom;
         
             while (true) {
 
@@ -632,48 +785,32 @@ auto main() -> int {
                 pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
+                    
+                    in_bloom = true;
+                    for (int a = 0; a < iterations; a++) {
+                        if (!check_bit(bloom1, pointBatchX[i].bits64[a] % bloom_pos)) {
+                            in_bloom = false;
+                            break;
+                        }
+                    }
 
-                    //xc = secp256k1->GetXHex(&pointBatchX[i], xC_len);
-                    //xc = std::format("{:x}", pointBatchX[i].bits64[3]);
-
-                    if (bf1.may_contain(pointBatchX[i].bits64[3])) {
-                        
-                        print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Higher Range Half]" << endl;
+                    if (in_bloom) {
                         
                         BloomP.x.Set(&pointBatchX[i]);
                         BloomP.y.ModSub(&startPoint.x, &pointBatchX[i]);
                         BloomP.y.ModMulK1(&slope[i], &BloomP.y);
                         BloomP.y.ModSub(&BloomP.y, &startPoint.y);
-                        
-                        privkey_num.clear();
-                        index = 0;
-                        for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
-                            count = 0;
-                            //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                            //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                            while (bf1.may_contain(BloomP.x.bits64[3])) {
-                                BloomP = secp256k1->SubtractPoints(BloomP, p);
-                                //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                                //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                                count += 1;
-                            }
-                            privkey_num.push_back(pow10_nums[index] * (count - 1));
-                            BloomP = secp256k1->AddPoints(BloomP, p);
-                            index += 1;
-                        }
-                                           
-                        steps = 0;
-                        for (auto& n : privkey_num) { steps += n; } // we got here the offset
-                        Int_steps.SetInt64(steps); // restoring the private key
-                        batch_index.Mult(&stride, uint64_t(i + 1));
-                        Int_temp.Add(&stride_sum, &batch_index);                        
-                        Int_temp.Add(&offset);
-                        Int_temp.Add(&Int_steps);
-                        privkey.Add(&pre_calc_sum, &Int_temp);
-                        privkey.Mult(mult); // we got here the private key
-                        calc_point = secp256k1->ScalarMultiplication(&privkey);
-                        
-                        if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+
+                        if (BloomP.x_equals(TargetP)) {
+                            Int_steps.SetInt64(0); // restoring the private key
+                            batch_index.Mult(&stride, uint64_t(i + 1));
+                            Int_temp.Add(&stride_sum, &batch_index);                        
+                            Int_temp.Add(&offset);
+                            Int_temp.Add(&Int_steps);
+                            privkey.Add(&pre_calc_sum, &Int_temp);
+                            privkey.Mult(mult); // we got here the private key
+
+                            print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Higher Range Half]" << endl;
                             print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
                             outFile.open("found.txt", ios::app);
@@ -682,48 +819,91 @@ auto main() -> int {
                             print_elapsed_time(chrono_start);
                             exit(0);
                         }
-                        print_time(); cout << "False Positive" << endl;
+
+                        CheckP = secp256k1->AddPoints(BloomP, Gm);
+                        in_bloom = true;
+                        for (int a = 0; a < iterations; a++) {
+                            if (!check_bit(bloom1, CheckP.x.bits64[a] % bloom_pos)) {
+                                in_bloom = false;
+                                break;
+                            }
+                        }
+
+                        if (in_bloom) {
+                        
+                            privkey_num.clear();
+                            index = 0;
+                            for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
+                                count = 0;
+                                do {
+                                    //BloomP = secp256k1->SubtractPoints(BloomP, p);
+                                    BloomP = secp256k1->AddPoints(BloomP, p);
+                                    count += 1;
+                                    in_bloom = true;
+                                    for (int c = 0; c < iterations; c++) {
+                                        if (!check_bit(bloom1, BloomP.x.bits64[c] % bloom_pos)) {
+                                            in_bloom = false;
+                                            break;
+                                        } 
+                                    }
+                                } while(in_bloom);
+                                privkey_num.push_back(pow10_nums[index] * (count - 1));
+                                p.y.ModNeg();
+                                BloomP = secp256k1->AddPoints(BloomP, p);
+                                p.y.ModNeg();
+                                index += 1;
+                            }
+                                               
+                            steps = 0;
+                            for (auto& n : privkey_num) { steps += n; } // we got here the offset
+                            Int_steps.SetInt64(steps); // restoring the private key
+                            batch_index.Mult(&stride, uint64_t(i + 1));
+                            Int_temp.Add(&stride_sum, &batch_index);                        
+                            Int_temp.Add(&offset);
+                            Int_temp.Add(&Int_steps);
+                            privkey.Add(&pre_calc_sum, &Int_temp);
+                            privkey.Mult(mult); // we got here the private key
+                            calc_point = secp256k1->ScalarMultiplication(&privkey);
+                            
+                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                                print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Higher Range Half]" << endl;
+                                print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
+                                ofstream outFile;
+                                outFile.open("found.txt", ios::app);
+                                outFile << privkey.GetBase10() << '\n';
+                                outFile.close();
+                                print_elapsed_time(chrono_start);
+                                exit(0);
+                            }
+                        }
+                    }
+
+                    in_bloom = true;
+                    for (int b = 0; b < iterations; b++) {
+                        if (!check_bit(bloom2, pointBatchX[i].bits64[b] % bloom_pos)) {
+                            in_bloom = false;
+                            break;
+                        }
                     }
                     
-                    if (bf2.may_contain(pointBatchX[i].bits64[3])) {
-                        
-                        print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Higher Range Half]" << endl;
+                    if (in_bloom) {
                         
                         BloomP.x.Set(&pointBatchX[i]);
                         BloomP.y.ModSub(&startPoint.x, &pointBatchX[i]);
                         BloomP.y.ModMulK1(&slope[i], &BloomP.y);
                         BloomP.y.ModSub(&BloomP.y, &startPoint.y);
-                        
-                        privkey_num.clear();
-                        index = 0;
-                        for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
-                            count = 0;
-                            //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                            //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                            while (bf2.may_contain(BloomP.x.bits64[3])) {
-                                BloomP = secp256k1->SubtractPoints(BloomP, p);
-                                //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                                //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                                count += 1;
-                            }
-                            privkey_num.push_back(pow10_nums[index] * (count - 1));
-                            BloomP = secp256k1->AddPoints(BloomP, p);
-                            index += 1;
-                        }
-                        
-                        steps = 0;
-                        for (auto& n : privkey_num) { steps += n; } // we got here the offset
-                        Int_steps.SetInt64(steps); // restoring the private key
-                        batch_index.Mult(&stride, uint64_t(i + 1));
-                        Int_temp.Add(&stride_sum, &batch_index);                        
-                        Int_temp.Add(&offset);
-                        Int_temp.Add(&Int_steps);
-                        privkey.Add(&pre_calc_sum, &Int_temp);
-                        privkey.Mult(mult);
-                        privkey.AddOne(); // we got here the private key
-                        calc_point = secp256k1->ScalarMultiplication(&privkey);
-                        
-                        if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+
+                        if (BloomP.x_equals(TargetP)) {
+                            Int_steps.SetInt64(0); // restoring the private key
+                            batch_index.Mult(&stride, uint64_t(i + 1));
+                            Int_temp.Add(&stride_sum, &batch_index);                        
+                            Int_temp.Add(&offset);
+                            Int_temp.Add(&Int_steps);
+                            privkey.Add(&pre_calc_sum, &Int_temp);
+                            privkey.Mult(mult);
+                            privkey.AddOne(); // we got here the private key
+
+                            print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Higher Range Half]" << endl;
                             print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
                             outFile.open("found.txt", ios::app);
@@ -732,7 +912,64 @@ auto main() -> int {
                             print_elapsed_time(chrono_start);
                             exit(0);
                         }
-                        print_time(); cout << "False Positive" << endl;
+
+                        CheckP = secp256k1->AddPoints(BloomP, Gm);
+                        in_bloom = true;
+                        for (int a = 0; a < iterations; a++) {
+                            if (!check_bit(bloom2, CheckP.x.bits64[a] % bloom_pos)) {
+                                in_bloom = false;
+                                break;
+                            }
+                        }
+
+                        if (in_bloom) {
+                        
+                            privkey_num.clear();
+                            index = 0;
+                            for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
+                                count = 0;
+                                do {
+                                    //BloomP = secp256k1->SubtractPoints(BloomP, p);
+                                    BloomP = secp256k1->AddPoints(BloomP, p);
+                                    count += 1;
+                                    in_bloom = true;
+                                    for (int c = 0; c < iterations; c++) {
+                                        if (!check_bit(bloom2, BloomP.x.bits64[c] % bloom_pos)) {
+                                            in_bloom = false;
+                                            break;
+                                        } 
+                                    }
+                                } while(in_bloom);
+                                privkey_num.push_back(pow10_nums[index] * (count - 1));
+                                p.y.ModNeg();
+                                BloomP = secp256k1->AddPoints(BloomP, p);
+                                p.y.ModNeg();
+                                index += 1;
+                            }
+                            
+                            steps = 0;
+                            for (auto& n : privkey_num) { steps += n; } // we got here the offset
+                            Int_steps.SetInt64(steps); // restoring the private key
+                            batch_index.Mult(&stride, uint64_t(i + 1));
+                            Int_temp.Add(&stride_sum, &batch_index);                        
+                            Int_temp.Add(&offset);
+                            Int_temp.Add(&Int_steps);
+                            privkey.Add(&pre_calc_sum, &Int_temp);
+                            privkey.Mult(mult);
+                            privkey.AddOne(); // we got here the private key
+                            calc_point = secp256k1->ScalarMultiplication(&privkey);
+                            
+                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                                print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Higher Range Half]" << endl;
+                                print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
+                                ofstream outFile;
+                                outFile.open("found.txt", ios::app);
+                                outFile << privkey.GetBase10() << '\n';
+                                outFile.close();
+                                print_elapsed_time(chrono_start);
+                                exit(0);
+                            }
+                        }
                     }
                 }
                  
@@ -742,7 +979,7 @@ auto main() -> int {
                 stride_sum.Add(&batch_stride);
                 save_counter += 1; // all values are derived from this data after new program start
                 
-                if (save_counter % 150000 == 0) {
+                if (save_counter % 250000 == 0) {
                     cpub = secp256k1->GetPublicKeyHex(startPoint);
                     ofstream outFile;
                     outFile.open("settings2.txt");
@@ -758,7 +995,6 @@ auto main() -> int {
         auto scalable_subtraction_search = [&](Point starting_Point, Int offset, Int stride_Sum) {
 
             Int stride_sum; stride_sum.Set(&stride_Sum);
-            //string cpub, xc, xc_sup;
             string cpub;
             int index, count;
             uint64_t steps;
@@ -775,9 +1011,11 @@ auto main() -> int {
             
             Point startPoint = starting_Point; // start point
             Point BloomP; // point for insertion of the batch into the bloomfilter
+            Point CheckP;
             
             Int batch_stride, batch_index;
             batch_stride.Mult(&stride, uint64_t(POINTS_BATCH_SIZE));
+            bool in_bloom;
         
             while (true) {
 
@@ -812,47 +1050,31 @@ auto main() -> int {
 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) {
 
-                    //xc = secp256k1->GetXHex(&pointBatchX[i], xC_len);
-                    //xc = std::format("{:x}", pointBatchX[i].bits64[3]);
+                    in_bloom = true;
+                    for (int a = 0; a < iterations; a++) {
+                        if (!check_bit(bloom1, pointBatchX[i].bits64[a] % bloom_pos)) {
+                            in_bloom = false;
+                            break;
+                        }
+                    }
 
-                    if (bf1.may_contain(pointBatchX[i].bits64[3])) {
-                        
-                        print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Higher Range Half]" << endl;
+                    if (in_bloom) {
                         
                         BloomP.x.Set(&pointBatchX[i]);
                         BloomP.y.ModSub(&startPoint.x, &pointBatchX[i]);
                         BloomP.y.ModMulK1(&slope[i], &BloomP.y);
                         BloomP.y.ModSub(&BloomP.y, &startPoint.y);
-                        
-                        privkey_num.clear();
-                        index = 0;
-                        for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
-                            count = 0;
-                            //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                            //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                            while (bf1.may_contain(BloomP.x.bits64[3])) {
-                                BloomP = secp256k1->SubtractPoints(BloomP, p);
-                                //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                                //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                                count += 1;
-                            }
-                            privkey_num.push_back(pow10_nums[index] * (count - 1));
-                            BloomP = secp256k1->AddPoints(BloomP, p);
-                            index += 1;
-                        }
-                                           
-                        steps = 0;
-                        for (auto& n : privkey_num) { steps += n; } // we got here the offset
-                        Int_steps.SetInt64(steps); // restoring the private key
-                        batch_index.Mult(&stride, uint64_t(i + 1));
-                        Int_temp.Add(&stride_sum, &batch_index);                        
-                        Int_temp.Add(&offset);
-                        Int_temp.Add(&Int_steps);
-                        privkey.Add(&pre_calc_sum, &Int_temp);
-                        privkey.Mult(mult); // we got here the private key
-                        calc_point = secp256k1->ScalarMultiplication(&privkey);
-                        
-                        if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+
+                        if (BloomP.x_equals(TargetP)) {
+                            Int_steps.SetInt64(0); // restoring the private key
+                            batch_index.Mult(&stride, uint64_t(i + 1));
+                            Int_temp.Add(&stride_sum, &batch_index);                        
+                            Int_temp.Add(&offset);
+                            Int_temp.Add(&Int_steps);
+                            privkey.Add(&pre_calc_sum, &Int_temp);
+                            privkey.Mult(mult); // we got here the private key
+
+                            print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Higher Range Half]" << endl;
                             print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
                             outFile.open("found.txt", ios::app);
@@ -861,48 +1083,91 @@ auto main() -> int {
                             print_elapsed_time(chrono_start);
                             exit(0);
                         }
-                        print_time(); cout << "False Positive" << endl;
+
+                        CheckP = secp256k1->AddPoints(BloomP, Gm);
+                        in_bloom = true;
+                        for (int a = 0; a < iterations; a++) {
+                            if (!check_bit(bloom1, CheckP.x.bits64[a] % bloom_pos)) {
+                                in_bloom = false;
+                                break;
+                            }
+                        }
+
+                        if (in_bloom) {
+                        
+                            privkey_num.clear();
+                            index = 0;
+                            for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
+                                count = 0;
+                                do {
+                                    //BloomP = secp256k1->SubtractPoints(BloomP, p);
+                                    BloomP = secp256k1->AddPoints(BloomP, p);
+                                    count += 1;
+                                    in_bloom = true;
+                                    for (int c = 0; c < iterations; c++) {
+                                        if (!check_bit(bloom1, BloomP.x.bits64[c] % bloom_pos)) {
+                                            in_bloom = false;
+                                            break;
+                                        } 
+                                    }
+                                } while(in_bloom);
+                                privkey_num.push_back(pow10_nums[index] * (count - 1));
+                                p.y.ModNeg();
+                                BloomP = secp256k1->AddPoints(BloomP, p);
+                                p.y.ModNeg();
+                                index += 1;
+                            }
+                                               
+                            steps = 0;
+                            for (auto& n : privkey_num) { steps += n; } // we got here the offset
+                            Int_steps.SetInt64(steps); // restoring the private key
+                            batch_index.Mult(&stride, uint64_t(i + 1));
+                            Int_temp.Add(&stride_sum, &batch_index);                        
+                            Int_temp.Add(&offset);
+                            Int_temp.Add(&Int_steps);
+                            privkey.Add(&pre_calc_sum, &Int_temp);
+                            privkey.Mult(mult); // we got here the private key
+                            calc_point = secp256k1->ScalarMultiplication(&privkey);
+                            
+                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                                print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Higher Range Half]" << endl;
+                                print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
+                                ofstream outFile;
+                                outFile.open("found.txt", ios::app);
+                                outFile << privkey.GetBase10() << '\n';
+                                outFile.close();
+                                print_elapsed_time(chrono_start);
+                                exit(0);
+                            }
+                        }
+                    }
+
+                    in_bloom = true;
+                    for (int b = 0; b < iterations; b++) {
+                        if (!check_bit(bloom2, pointBatchX[i].bits64[b] % bloom_pos)) {
+                            in_bloom = false;
+                            break;
+                        }
                     }
                     
-                    if (bf2.may_contain(pointBatchX[i].bits64[3])) {
-                        
-                        print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Higher Range Half]" << endl;
+                    if (in_bloom) {
                         
                         BloomP.x.Set(&pointBatchX[i]);
                         BloomP.y.ModSub(&startPoint.x, &pointBatchX[i]);
                         BloomP.y.ModMulK1(&slope[i], &BloomP.y);
                         BloomP.y.ModSub(&BloomP.y, &startPoint.y);
-                        
-                        privkey_num.clear();
-                        index = 0;
-                        for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
-                            count = 0;
-                            //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                            //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                            while (bf2.may_contain(BloomP.x.bits64[3])) {
-                                BloomP = secp256k1->SubtractPoints(BloomP, p);
-                                //xc_sup = secp256k1->GetXHex(&BloomP.x, xC_len);
-                                //xc_sup = std::format("{:x}", BloomP.x.bits64[3]);
-                                count += 1;
-                            }
-                            privkey_num.push_back(pow10_nums[index] * (count - 1));
-                            BloomP = secp256k1->AddPoints(BloomP, p);
-                            index += 1;
-                        }
-                        
-                        steps = 0;
-                        for (auto& n : privkey_num) { steps += n; } // we got here the offset
-                        Int_steps.SetInt64(steps); // restoring the private key
-                        batch_index.Mult(&stride, uint64_t(i + 1));
-                        Int_temp.Add(&stride_sum, &batch_index);                        
-                        Int_temp.Add(&offset);
-                        Int_temp.Add(&Int_steps);
-                        privkey.Add(&pre_calc_sum, &Int_temp);
-                        privkey.Mult(mult);
-                        privkey.AddOne(); // we got here the private key
-                        calc_point = secp256k1->ScalarMultiplication(&privkey);
-                        
-                        if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+
+                        if (BloomP.x_equals(TargetP)) {
+                            Int_steps.SetInt64(0); // restoring the private key
+                            batch_index.Mult(&stride, uint64_t(i + 1));
+                            Int_temp.Add(&stride_sum, &batch_index);                        
+                            Int_temp.Add(&offset);
+                            Int_temp.Add(&Int_steps);
+                            privkey.Add(&pre_calc_sum, &Int_temp);
+                            privkey.Mult(mult);
+                            privkey.AddOne(); // we got here the private key
+
+                            print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Higher Range Half]" << endl;
                             print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
                             outFile.open("found.txt", ios::app);
@@ -911,7 +1176,64 @@ auto main() -> int {
                             print_elapsed_time(chrono_start);
                             exit(0);
                         }
-                        print_time(); cout << "False Positive" << endl;
+
+                        CheckP = secp256k1->AddPoints(BloomP, Gm);
+                        in_bloom = true;
+                        for (int a = 0; a < iterations; a++) {
+                            if (!check_bit(bloom2, CheckP.x.bits64[a] % bloom_pos)) {
+                                in_bloom = false;
+                                break;
+                            }
+                        }
+
+                        if (in_bloom) {
+                        
+                            privkey_num.clear();
+                            index = 0;
+                            for (auto& p : pow10_points) { // getting the offset from the target point based on bloomfilter hits
+                                count = 0;
+                                do {
+                                    //BloomP = secp256k1->SubtractPoints(BloomP, p);
+                                    BloomP = secp256k1->AddPoints(BloomP, p);
+                                    count += 1;
+                                    in_bloom = true;
+                                    for (int c = 0; c < iterations; c++) {
+                                        if (!check_bit(bloom2, BloomP.x.bits64[c] % bloom_pos)) {
+                                            in_bloom = false;
+                                            break;
+                                        } 
+                                    }
+                                } while(in_bloom);
+                                privkey_num.push_back(pow10_nums[index] * (count - 1));
+                                p.y.ModNeg();
+                                BloomP = secp256k1->AddPoints(BloomP, p);
+                                p.y.ModNeg();
+                                index += 1;
+                            }
+                            
+                            steps = 0;
+                            for (auto& n : privkey_num) { steps += n; } // we got here the offset
+                            Int_steps.SetInt64(steps); // restoring the private key
+                            batch_index.Mult(&stride, uint64_t(i + 1));
+                            Int_temp.Add(&stride_sum, &batch_index);                        
+                            Int_temp.Add(&offset);
+                            Int_temp.Add(&Int_steps);
+                            privkey.Add(&pre_calc_sum, &Int_temp);
+                            privkey.Mult(mult);
+                            privkey.AddOne(); // we got here the private key
+                            calc_point = secp256k1->ScalarMultiplication(&privkey);
+                            
+                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                                print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Higher Range Half]" << endl;
+                                print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
+                                ofstream outFile;
+                                outFile.open("found.txt", ios::app);
+                                outFile << privkey.GetBase10() << '\n';
+                                outFile.close();
+                                print_elapsed_time(chrono_start);
+                                exit(0);
+                            }
+                        }
                     }
                 }
                  

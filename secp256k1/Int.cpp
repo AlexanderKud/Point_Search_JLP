@@ -263,8 +263,9 @@ void Int::SetInt32(uint32_t value) {
 void Int::SetInt64(uint64_t value) {
 
   CLEAR();
-  bits[0] = (uint32_t)value;
-  bits[1] = (uint32_t)(value >> 32);
+  //bits[0] = (uint32_t)value;
+  //bits[1] = (uint32_t)(value >> 32);
+  bits64[0] = value;
 }
 
 // ------------------------------------------------

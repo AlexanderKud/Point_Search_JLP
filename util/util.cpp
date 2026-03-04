@@ -1,4 +1,7 @@
+#include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+
 #include <ctime>
 #include <chrono>
 #include <string>
@@ -41,7 +44,7 @@ void print_time() {
     std::cout << "[" << output << "] ";
 }
 
-vector<uint64_t> break_down_to_pow10(uint64_t num) {
+vector<uint64_t> break_down_into_pow10(uint64_t num) {
     vector<uint64_t> nums;
     string stri = to_string(num);
     int num_len = stri.length() - 2;
@@ -58,4 +61,23 @@ void print_elapsed_time(std::chrono::time_point<std::chrono::system_clock> start
     duration -= minutes;
     auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
     print_time(); cout << "Elapsed time: (" << hours.count() << ")hours (" << minutes.count() << ")minutes (" << seconds.count() << ")seconds\n";
+}
+
+void set_bit(unsigned char *bloom, size_t pos) {
+    bloom[pos >> 3] |= (1 << (pos & 7));
+}
+int check_bit(unsigned char *bloom, size_t pos) {
+    return (bloom[pos >> 3] >> (pos & 7)) & 1;
+}
+
+void save_bloom_filter(const char *filename, unsigned char *bloom, size_t size) {
+    FILE *fp = fopen(filename, "wb");
+    fwrite(bloom, 1, size, fp);
+    fclose(fp);
+}
+
+void load_bloom_filter(const char *filename, unsigned char *bloom, size_t size) {
+    FILE *fp = fopen(filename, "rb");
+    fread(bloom, 1, size, fp);
+    fclose(fp);
 }

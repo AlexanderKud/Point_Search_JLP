@@ -1,10 +1,7 @@
 <pre>
-Requires C++ Boost Library to be installed. <a href="https://www.boost.org">https://www.boost.org</a>
 Requires C/C++ GMP Library to be installed. <a href="https://gmplib.org">https://gmplib.org</a>
 Requires C/C++ OpenMP Library to be installed. <a href="https://www.openmp.org">https://www.openmp.org</a>
 You can find the right package manager commands on the Internet for your Linux Distro.
-
-On Windows use WSL. Tested to compile and run.
 
 generate_bloom.cpp
 - batch addition
@@ -13,14 +10,6 @@ generate_bloom.cpp
 - calculating x,y for the last of the batch entry (used as the next startPoint)
 - bloom add x coordinate uint64_t bits64[3] part
 
-generate_bloom2.cpp
-JLP Batch Reference Logic:
-- batch addition/subtraction
-- batch inversion
-- center of the group
-- calculating x coordinate for the batch
-- calculating x,y for the last of the batch entry (used as the next startPoint)
-
 point_search.cpp
 - batch addition
 - batch inversion
@@ -28,32 +17,29 @@ point_search.cpp
 - calculating x,y for the last of the batch entry (used as the next startPoint)
 - bloom check by x coordinate uint64_t bits64[3] part, computing y coordinate only if there is a hit
 
-Kali Linux Xfce(X11)  
-┌┌──(alexander㉿kali)-[~/Documents/Point_Search_JLP]
-└─$ ./generate_bloom
-[23:01:16] P_table generated
-[23:01:16] Range Start: 64 bits
-[23:01:16] Range End  : 65 bits
-[23:01:16] Block Width: 2^31
-[23:01:16] Search Pub : 03c7290b09537769fe749210c75bc592e127204ad8b677c79f3f0c51e73b2f6d8c
-[23:01:16] Settings written to file
-[23:01:16] Creating bloomfilter images
-[23:29:44] Writing bloom2 image to bloom2.bf
-[23:29:59] Writing bloom1 image to bloom1.bf
-[23:32:48] Elapsed time: (0)hours (31)minutes (32)seconds
-                                                                                                                  
-┌──(alexander㉿kali)-[~/Documents/Point_Search_JLP]
-└─$ ./point_search  
-[00:01:24] S_table generated
-[00:01:24] Range Start: 64 bits
-[00:01:24] Range End  : 65 bits
-[00:01:24] Block Width: 2^31
-[00:01:24] Search Pub : 03c7290b09537769fe749210c75bc592e127204ad8b677c79f3f0c51e73b2f6d8c
-[00:01:24] Loading Bloomfilter images
-[00:03:33] Search in progress...
-[00:04:03] BloomFilter Hit bloom1.bf (Even Point) [Lower Range Half]
-[00:04:03] False Positive
-[00:05:01] BloomFilter Hit bloom1.bf (Even Point) [Lower Range Half]
-[00:05:01] Private key: 24624325287185305508
-[00:05:01] Elapsed time: (0)hours (1)minutes (27)seconds
+[alexander@alexander-manjaro Point_Search_JLP]$ ./generate_bloom
+[18:59:05] P_table generated
+[18:59:05] Range Start: 65 bits
+[18:59:05] Range End  : 66 bits
+[18:59:05] Block Width: 2^31
+[18:59:05] Search Pub : 0217d9823862bf7a648e3d88f9685aec65be263b15a56424078ddce4ca006e012e
+[18:59:05] Settings written to file
+[18:59:05] Creating bloomfilter images
+[19:06:10] Writing BloomFilter to bloom1.bf
+[19:06:11] Writing BloomFilter to bloom2.bf
+[19:08:12] Elapsed time: (0)hours (9)minutes (7)seconds
+
+[alexander@alexander-manjaro Point_Search_JLP]$ ./point_search
+[19:10:02] S_table generated
+[19:10:02] Range Start: 65 bits
+[19:10:02] Range End  : 66 bits
+[19:10:02] Block Width: 2^31
+[19:10:02] Search Pub : 0217d9823862bf7a648e3d88f9685aec65be263b15a56424078ddce4ca006e012e
+[19:10:02] Loading Bloomfilter images
+[19:10:20] Search in progress...
+[19:14:46] Save Data written to settings1.txt
+[19:14:47] Save Data written to settings2.txt
+[19:18:04] BloomFilter Hit bloom1.bf (Even Point) [Lower Range Half]
+[19:18:04] Private key: 44179411046104651556
+[19:18:04] Elapsed time: (0)hours (7)minutes (43)seconds
 </pre>

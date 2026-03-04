@@ -3,21 +3,17 @@
 #include <vector>
 #include <thread>
 #include <omp.h>
-//#include <format>
+#include <cmath>
+#include <stdalign.h>
 
 #include "secp256k1/SECP256k1.h"
 #include "secp256k1/Int.h"
 #include "secp256k1/IntGroup.h"
-#include "bloom/filter.hpp"
 #include "util/util.h"
 
 using namespace std;
-using filter = boost::bloom::filter<boost::uint64_t, 32>; // bloomfilter settings
 
-const double error = 0.0000000001; // errror rate for bloomfilter
 const int n_cores = 2; //actual number of processing cores equal to some power of two value(2,4,8,16,32,64,...) divided by 2
-//const int xC_len = 10; //X coordinate length to be inserted into the bloomfilter (should be the same for generate_bloom and point_search max=33(full length X coordinate))
-
 static constexpr int POINTS_BATCH_SIZE = 1024; // Batch addition with batch inversion using IntGroup class
 
 static omp_lock_t lock1;
@@ -112,10 +108,14 @@ auto main() -> int {
     
     omp_init_lock(&lock1);
     omp_init_lock(&lock2);
-    
+
+    uint64_t bloom_size = n_elements * 4;
+    uint64_t bloom_pos = bloom_size * 8;
+    int iterations = 4;
+
     auto bloom_create1 = [&]() {
         
-        string bloomfile = "bloom1.bf"; //       bloomfilter for even case (1164->1288)   [1288 + block_width] will hit
+        char * bloomfile = "bloom1.bf"; //       bloomfilter for even case (1164->1288)   [1288 + block_width] will hit
         Point P = secp256k1->SubtractPoints(puzzle_point, secp256k1->G); //(1165.5->1289) [1289 + block_width] will not hit
         Point starting_points[n_cores];
         for (int i = 0; i < n_cores; i++) { // calculating the starting points 
@@ -123,7 +123,7 @@ auto main() -> int {
             P = secp256k1->AddPoints(P, Add_Point);
         }
 
-        filter bf(n_elements, error);
+        unsigned char * bloom = (unsigned char *)calloc(bloom_size, sizeof(unsigned char));
         
         auto process_chunk = [&](Point start_point) { // function for a thread
             
@@ -169,9 +169,9 @@ auto main() -> int {
                 
                 omp_set_lock(&lock1);
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points X coordinates into the bloomfilter
-                    bf.insert(pointBatchX[i].bits64[3]);
-                    //bf.insert(std::format("{:x}", pointBatchX[i].bits64[3]));
-                    //bf.insert(secp256k1->GetXHex(&pointBatchX[i], xC_len)); // xC_len (length of the X coordinate hex representation)
+                    for(int a = 0; a < iterations; a++) {
+                        set_bit(bloom, pointBatchX[i].bits64[a] % bloom_pos);
+                    }
                 }
                 omp_unset_lock(&lock1);
                 
@@ -192,19 +192,14 @@ auto main() -> int {
         }
         
         omp_destroy_lock(&lock1);
-        
-        print_time(); cout << "Writing bloom1 image to bloom1.bf" << '\n';
-        std::ofstream out(bloomfile, std::ios::binary);
-        std::size_t c1= bf.capacity();
-        out.write((const char*) &c1, sizeof(c1)); // save capacity (bits)
-        boost::span<const unsigned char> s1 = bf.array();
-        out.write((const char*) s1.data(), s1.size()); // save array
-        out.close();
+
+        print_time(); cout << "Writing BloomFilter to bloom1.bf" << endl; 
+        save_bloom_filter(bloomfile, bloom, bloom_size);
     };
 
     auto bloom_create2 = [&]() {
         
-        string bloomfile = "bloom2.bf"; //           bloomfilter for odd case  (1165.5->1289.5) [1289.5 + block_width] will hit
+        char * bloomfile = "bloom2.bf"; //           bloomfilter for odd case  (1165.5->1289.5) [1289.5 + block_width] will hit
         Point P = secp256k1->SubtractPoints(puzzle_point_05, secp256k1->G); // (1164->1288.5)   [1288.5 + block_width] will not hit
         Point starting_points[n_cores];
         for (int i = 0; i < n_cores; i++) { // calculating the starting points 
@@ -212,7 +207,7 @@ auto main() -> int {
             P = secp256k1->AddPoints(P, Add_Point);
         }
         
-        filter bf(n_elements, error);
+        unsigned char * bloom = (unsigned char *)calloc(bloom_size, sizeof(unsigned char));
         
         auto process_chunk = [&](Point start_point) {  // function for a thread
             
@@ -258,9 +253,9 @@ auto main() -> int {
                 
                 omp_set_lock(&lock2);
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points X coordinates into the bloomfilter
-                    bf.insert(pointBatchX[i].bits64[3]);
-                    //bf.insert(std::format("{:x}", pointBatchX[i].bits64[3]));
-                    //bf.insert(secp256k1->GetXHex(&pointBatchX[i], xC_len)); // xC_len (length of the X coordinate hex representation)
+                    for(int a = 0; a < iterations; a++) {
+                        set_bit(bloom, pointBatchX[i].bits64[a] % bloom_pos);
+                    }
                 }
                 omp_unset_lock(&lock2);
                 
@@ -275,20 +270,15 @@ auto main() -> int {
         for (int i = 0; i < n_cores; i++) {
             myThreads[i] = std::thread(process_chunk, starting_points[i]);
         }
-        
+
         for (int i = 0; i < n_cores; i++) {
             myThreads[i].join(); // waiting for threads to finish
         }
         
         omp_destroy_lock(&lock2);
 
-        print_time(); cout << "Writing bloom2 image to bloom2.bf" << '\n'; 
-        std::ofstream out(bloomfile, std::ios::binary);
-        std::size_t c1= bf.capacity();
-        out.write((const char*) &c1, sizeof(c1)); // save capacity (bits)
-        boost::span<const unsigned char> s1 = bf.array();
-        out.write((const char*) s1.data(), s1.size()); // save array
-        out.close();
+        print_time(); cout << "Writing BloomFilter to bloom2.bf" << endl; 
+        save_bloom_filter(bloomfile, bloom, bloom_size);
     };
 
     std::thread thread1(bloom_create1);
