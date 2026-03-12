@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cstdint>
+#include <cmath>
 
 void substr(char *dst, char *src, int position, int length);
 bool startsWith(const char *pre, const char *str);

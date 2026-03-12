@@ -2,7 +2,6 @@
 #define INTGROUPH
 
 #include "Int.h"
-#include <vector>
 
 class IntGroup {
 

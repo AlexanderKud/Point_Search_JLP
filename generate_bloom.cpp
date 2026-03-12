@@ -1,9 +1,7 @@
 #include <iostream>
 #include <fstream>
-#include <vector>
 #include <thread>
 #include <mutex>
-#include <cmath>
 
 #include "secp256k1/SECP256k1.h"
 #include "secp256k1/Int.h"
@@ -13,7 +11,7 @@
 using namespace std;
 
 const int n_cores = 2;
-static constexpr int POINTS_BATCH_SIZE = 1024; // Batch addition with batch inversion using IntGroup class
+const int POINTS_BATCH_SIZE = 1024; // Batch addition with batch inversion using IntGroup class
 
 std::mutex lock1;
 std::mutex lock2;

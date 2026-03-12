@@ -1,7 +1,6 @@
 #include "SECP256k1.h"
 #include <string.h>
 #include <cstdint>
-#include <iostream>
 
 Secp256K1::Secp256K1() {
 }

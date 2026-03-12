@@ -2,11 +2,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <iostream>
 #include <ctime>
 #include <chrono>
 #include <string>
-#include <iostream>
-#include <cmath>
 
 #include "util.h"
 
