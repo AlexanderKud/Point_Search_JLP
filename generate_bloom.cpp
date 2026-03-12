@@ -12,7 +12,7 @@
 
 using namespace std;
 
-const int n_cores = 2; //actual number of processing cores equal to some power of two value(2,4,8,16,32,64,...) divided by 2
+const int n_cores = 2;
 static constexpr int POINTS_BATCH_SIZE = 1024; // Batch addition with batch inversion using IntGroup class
 
 static omp_lock_t lock1;
@@ -22,11 +22,6 @@ auto main() -> int {
     
     auto chrono_start = std::chrono::high_resolution_clock::now();    // starting the timer
     Secp256K1* secp256k1 = new Secp256K1(); secp256k1->Init(); // initializing secp256k1 context
-   
-    std::remove("settings1.txt"); // remove previous settings and bloom files
-    std::remove("settings2.txt");
-    std::remove("bloom1.bf");
-    std::remove("bloom2.bf");
     
     Int pk; pk.SetInt32(1); // generating power of two points table (2^0..2^256) 
     uint64_t mult = 2;
@@ -75,13 +70,13 @@ auto main() -> int {
     string sp{secp256k1->GetPublicKeyHex(Q)};                          // if the puzzle point is in higher range half
                                                                        // the calculated point will be ahead of it// 1784 < - 1908 (subtraction_search)
     ofstream outFile1; // writing settings to files
-    outFile1.open("settings1.txt", ios::app);                          // for odd number 1289 the point will be 1165.5
+    outFile1.open("settings1.txt");                          // for odd number 1289 the point will be 1165.5
     outFile1 << sp <<'\n';                                             // that is why two bloomfilters are used
     outFile1 << "0" << '\n';
     outFile1.close();
     
     ofstream outFile2;
-    outFile2.open("settings2.txt", ios::app);
+    outFile2.open("settings2.txt");
     outFile2 << sp <<'\n';
     outFile2 << "0" << '\n';
     outFile2.close();
@@ -124,7 +119,9 @@ auto main() -> int {
 
         unsigned char * bloom = (unsigned char *)calloc(bloom_size, sizeof(unsigned char));
         
-        auto process_chunk = [&](Point start_point) { // function for a thread
+        auto process_chunk = [&](Point start_point, int threadID) { // function for a thread
+
+            print_time(); cout << "Bloom1 threadID->[" << threadID << "] working" << endl; 
             
             IntGroup modGroup(POINTS_BATCH_SIZE); // group of deltaX (x1 - x2) set for batch inversion
             Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
@@ -183,7 +180,7 @@ auto main() -> int {
         
         std::thread myThreads[n_cores]; // launching threads
         for (int i = 0; i < n_cores; i++) {
-            myThreads[i] = std::thread(process_chunk, starting_points[i]);
+            myThreads[i] = std::thread(process_chunk, starting_points[i], i);
         }
 
         for (int i = 0; i < n_cores; i++) {
@@ -208,7 +205,9 @@ auto main() -> int {
         
         unsigned char * bloom = (unsigned char *)calloc(bloom_size, sizeof(unsigned char));
         
-        auto process_chunk = [&](Point start_point) {  // function for a thread
+        auto process_chunk = [&](Point start_point, int threadID) {  // function for a thread
+
+            print_time(); cout << "Bloom2 threadID->[" << threadID << "] working" << endl;
             
             IntGroup modGroup(POINTS_BATCH_SIZE); // group of deltaX (x1 - x2) set for batch inversion
             Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
@@ -267,7 +266,7 @@ auto main() -> int {
         
         std::thread myThreads[n_cores]; // launching threads
         for (int i = 0; i < n_cores; i++) {
-            myThreads[i] = std::thread(process_chunk, starting_points[i]);
+            myThreads[i] = std::thread(process_chunk, starting_points[i], i);
         }
 
         for (int i = 0; i < n_cores; i++) {
