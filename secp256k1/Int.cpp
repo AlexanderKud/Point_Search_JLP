@@ -63,16 +63,36 @@ void Int::Set(Int *a) {
 
 // ------------------------------------------------
 
-void Int::floor_Div(Int *a, Int *b) {
-  Int r;
-  mpz_t n, d, q;
-  mpz_inits(n, d, q, NULL);
-  mpz_set_str(n, a->GetBase10().c_str(), 0);
-  mpz_set_str(d, b->GetBase10().c_str(), 0);
-  mpz_fdiv_q(q, n, d);
-  r.SetBase10(mpz_get_str(NULL, 10, q));
-  mpz_clears(n, d, q, NULL);
-  this->Set(&r);
+void Int::MultInvModN() {
+  
+  Int m;
+  m.SetBase10("115792089237316195423570985008687907852837564279074904382605163141518161494337");
+  Int u(this); 
+  Int v, x1, x2; 
+  v.Set(&m);
+  x1.SetInt32(1);
+  x2.SetInt32(0);
+  Int q, r, x, w;
+
+  while (!u.IsOne()) {
+    q.Set(&v);
+    q.Div(&u, &r);
+    w.Mult(&q, &x1);
+    x.Sub(&x2, &w);
+    v.Set(&u);
+    u.Set(&r);
+    x2.Set(&x1);
+    x1.Set(&x);
+  }
+
+  if (x1.IsNegative()) {
+    x1.Add(&m);
+    this->Set(&x1);
+  }
+  else { 
+    this->Set(&x1); 
+  }
+
 }
 
 void Int::Add(Int *a) {

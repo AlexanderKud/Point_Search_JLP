@@ -2,7 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <thread>
-#include <omp.h>
+#include <mutex>
 #include <cmath>
 
 #include "secp256k1/SECP256k1.h"
@@ -15,8 +15,8 @@ using namespace std;
 const int n_cores = 2;
 static constexpr int POINTS_BATCH_SIZE = 1024; // Batch addition with batch inversion using IntGroup class
 
-static omp_lock_t lock1;
-static omp_lock_t lock2;
+std::mutex lock1;
+std::mutex lock2;
 
 auto main() -> int {
     
@@ -99,9 +99,6 @@ auto main() -> int {
     }
     
     int nbBatch = keysPerThread / POINTS_BATCH_SIZE; // number of batches for the single thread
-    
-    omp_init_lock(&lock1);
-    omp_init_lock(&lock2);
 
     uint64_t bloom_size = n_elements * 4;
     uint64_t bloom_pos = bloom_size * 8;
@@ -119,9 +116,7 @@ auto main() -> int {
 
         unsigned char * bloom = (unsigned char *)calloc(bloom_size, sizeof(unsigned char));
         
-        auto process_chunk = [&](Point start_point, int threadID) { // function for a thread
-
-            print_time(); cout << "Bloom1 threadID->[" << threadID << "] working" << endl; 
+        auto process_chunk = [&](Point start_point) { // function for a thread
             
             IntGroup modGroup(POINTS_BATCH_SIZE); // group of deltaX (x1 - x2) set for batch inversion
             Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
@@ -162,32 +157,31 @@ auto main() -> int {
                 pointBatchY[i].ModSub(&startPoint.x, &pointBatchX[i]);
                 pointBatchY[i].ModMulK1(&slope, &pointBatchY[i]);
                 pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
+
+                startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]); // setting the new startPoint for the next batch iteration
+                startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]);
                 
-                omp_set_lock(&lock1);
+                lock1.lock();
+
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points X coordinates into the bloomfilter
                     for(int a = 0; a < iterations; a++) {
                         set_bit(bloom, pointBatchX[i].bits64[a] % bloom_pos);
                     }
                 }
-                omp_unset_lock(&lock1);
-                
-                startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]); // setting the new startPoint for the next batch iteration
-                startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]);
 
-            }
-            
+                lock1.unlock();
+
+            }      
         };
         
         std::thread myThreads[n_cores]; // launching threads
         for (int i = 0; i < n_cores; i++) {
-            myThreads[i] = std::thread(process_chunk, starting_points[i], i);
+            myThreads[i] = std::thread(process_chunk, starting_points[i]);
         }
 
         for (int i = 0; i < n_cores; i++) {
             myThreads[i].join(); // waiting for threads to finish
         }
-        
-        omp_destroy_lock(&lock1);
 
         print_time(); cout << "Writing BloomFilter to bloom1.bf" << endl; 
         save_bloom_filter(bloomfile, bloom, bloom_size);
@@ -205,9 +199,7 @@ auto main() -> int {
         
         unsigned char * bloom = (unsigned char *)calloc(bloom_size, sizeof(unsigned char));
         
-        auto process_chunk = [&](Point start_point, int threadID) {  // function for a thread
-
-            print_time(); cout << "Bloom2 threadID->[" << threadID << "] working" << endl;
+        auto process_chunk = [&](Point start_point) {  // function for a thread
             
             IntGroup modGroup(POINTS_BATCH_SIZE); // group of deltaX (x1 - x2) set for batch inversion
             Int deltaX[POINTS_BATCH_SIZE]; // here we store (x1 - x2) batch that will be inverted for later multiplication
@@ -248,32 +240,31 @@ auto main() -> int {
                 pointBatchY[i].ModSub(&startPoint.x, &pointBatchX[i]);
                 pointBatchY[i].ModMulK1(&slope, &pointBatchY[i]);
                 pointBatchY[i].ModSub(&pointBatchY[i], &startPoint.y);
+
+                startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]); // setting the new startPoint for the next batch iteration
+                startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]);
                 
-                omp_set_lock(&lock2);
+                lock2.lock();
+
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points X coordinates into the bloomfilter
                     for(int a = 0; a < iterations; a++) {
                         set_bit(bloom, pointBatchX[i].bits64[a] % bloom_pos);
                     }
                 }
-                omp_unset_lock(&lock2);
-                
-                startPoint.x.Set(&pointBatchX[POINTS_BATCH_SIZE - 1]); // setting the new startPoint for the next batch iteration
-                startPoint.y.Set(&pointBatchY[POINTS_BATCH_SIZE - 1]);
-                
-            }
-            
+
+                lock2.unlock();
+
+            }  
         };
         
         std::thread myThreads[n_cores]; // launching threads
         for (int i = 0; i < n_cores; i++) {
-            myThreads[i] = std::thread(process_chunk, starting_points[i], i);
+            myThreads[i] = std::thread(process_chunk, starting_points[i]);
         }
 
         for (int i = 0; i < n_cores; i++) {
             myThreads[i].join(); // waiting for threads to finish
         }
-        
-        omp_destroy_lock(&lock2);
 
         print_time(); cout << "Writing BloomFilter to bloom2.bf" << endl; 
         save_bloom_filter(bloomfile, bloom, bloom_size);

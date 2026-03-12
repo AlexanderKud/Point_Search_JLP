@@ -115,9 +115,10 @@ auto main() -> int {
         stride_point = secp256k1->ScalarMultiplication(&stride);
         
         //start splitting the search according to the chosen number of cpu cores
-        Int offset_Step, int_Cores, vector_Num;
+        Int offset_Step, int_Cores, vector_Num, r;
         int_Cores.SetInt32(cpuCores);
-        offset_Step.floor_Div(&S_table[range_start - 2], &int_Cores);
+        offset_Step.Set(&S_table[range_start - 2]);
+        offset_Step.Div(&int_Cores, &r);
         
         vector_Num.SetInt32(0);
         vector<Int> offset_Nums;
@@ -151,7 +152,7 @@ auto main() -> int {
             addPoints[i] = batch_Add;
         }
         // scalable_addition_search_save
-        auto scalable_addition_search_save = [&](Point starting_Point, Int offset, Int stride_Sum) {
+        auto scalable_addition_search_save = [&](Point starting_Point, Int offset, Int stride_Sum, int threadID) {
 
             Int stride_sum; stride_sum.Set(&stride_Sum);
             Int Int_steps, Int_temp, privkey;
@@ -233,6 +234,8 @@ auto main() -> int {
                             privkey.Sub(&pre_calc_sum, &Int_temp);
                             privkey.Mult(mult); // we got here the private key
                             
+                            print_time(); cout << "Addition Search ThreadID -> " << threadID << endl;
+                            print_time(); cout << "Direct Hit" << threadID << endl;
                             print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
                             print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
@@ -286,6 +289,8 @@ auto main() -> int {
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
                             if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                                print_time(); cout << "Addition Search ThreadID -> " << threadID << endl;
+                                print_time(); cout << "Offset -> " << offset.GetBase10() << endl;
                                 print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
@@ -323,6 +328,8 @@ auto main() -> int {
                             privkey.Mult(mult);
                             privkey.AddOne(); // we got here the private key
                             
+                            print_time(); cout << "Addition Search ThreadID -> " << threadID << endl;
+                            print_time(); cout << "Direct Hit" << threadID << endl;
                             print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Lower Range Half]" << endl;
                             print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
@@ -377,6 +384,8 @@ auto main() -> int {
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
                             if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                                print_time(); cout << "Addition Search ThreadID -> " << threadID << endl;
+                                print_time(); cout << "Offset -> " << offset.GetBase10() << endl;
                                 print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Lower Range Half]" << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
@@ -409,7 +418,7 @@ auto main() -> int {
             } // while (true) loop end curly brace
         }; //scalable_addition_search_save
         // scalable_addition_search
-        auto scalable_addition_search = [&](Point starting_Point, Int offset, Int stride_Sum) {
+        auto scalable_addition_search = [&](Point starting_Point, Int offset, Int stride_Sum, int threadID) {
 
             Int stride_sum; stride_sum.Set(&stride_Sum);
             Int Int_steps, Int_temp, privkey;
@@ -491,6 +500,8 @@ auto main() -> int {
                             privkey.Sub(&pre_calc_sum, &Int_temp);
                             privkey.Mult(mult); // we got here the private key
                             
+                            print_time(); cout << "Addition Search ThreadID -> " << threadID << endl;
+                            print_time(); cout << "Direct Hit" << threadID << endl;
                             print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
                             print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
@@ -544,6 +555,8 @@ auto main() -> int {
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
                             if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                                print_time(); cout << "Addition Search ThreadID -> " << threadID << endl;
+                                print_time(); cout << "Offset -> " << offset.GetBase10() << endl;
                                 print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
@@ -581,6 +594,8 @@ auto main() -> int {
                             privkey.Mult(mult);
                             privkey.AddOne(); // we got here the private key
                             
+                            print_time(); cout << "Addition Search ThreadID -> " << threadID << endl;
+                            print_time(); cout << "Direct Hit" << threadID << endl;
                             print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Lower Range Half]" << endl;
                             print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
@@ -635,6 +650,8 @@ auto main() -> int {
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
                             if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                                print_time(); cout << "Addition Search ThreadID -> " << threadID << endl;
+                                print_time(); cout << "Offset -> " << offset.GetBase10() << endl;
                                 print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Lower Range Half]" << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
@@ -658,9 +675,9 @@ auto main() -> int {
         
         std::thread addition_Threads[cpuCores];
         
-        addition_Threads[0] = std::thread(scalable_addition_search_save, starting_Points[0], offset_Nums[0], stride_sum);
+        addition_Threads[0] = std::thread(scalable_addition_search_save, starting_Points[0], offset_Nums[0], stride_sum, 0);
         for (int i = 1; i < cpuCores; i++) {
-            addition_Threads[i] = std::thread(scalable_addition_search, starting_Points[i], offset_Nums[i], stride_sum);
+            addition_Threads[i] = std::thread(scalable_addition_search, starting_Points[i], offset_Nums[i], stride_sum, i);
         }
 
         for (int i = 0; i < cpuCores; i++) {
@@ -685,9 +702,10 @@ auto main() -> int {
         stride_point = secp256k1->ScalarMultiplication(&stride);
         
         //start splitting the search according to the chosen number of cpu cores
-        Int offset_Step, int_Cores, vector_Num;
+        Int offset_Step, int_Cores, vector_Num, r;
         int_Cores.SetInt32(cpuCores);
-        offset_Step.floor_Div(&S_table[range_start - 2], &int_Cores);
+        offset_Step.Set(&S_table[range_start - 2]);
+        offset_Step.Div(&int_Cores, &r);
         
         vector_Num.SetInt32(0);
         vector<Int> offset_Nums;
@@ -724,7 +742,7 @@ auto main() -> int {
             addPoints[i].y.ModNeg();
         }
         // scalable_subtraction_search_save
-        auto scalable_subtraction_search_save = [&](Point starting_Point, Int offset, Int stride_Sum) {
+        auto scalable_subtraction_search_save = [&](Point starting_Point, Int offset, Int stride_Sum, int threadID) {
 
             Int stride_sum; stride_sum.Set(&stride_Sum);
             string cpub;
@@ -806,6 +824,8 @@ auto main() -> int {
                             privkey.Add(&pre_calc_sum, &Int_temp);
                             privkey.Mult(mult); // we got here the private key
 
+                            print_time(); cout << "Subtraction Search ThreadID -> " << threadID << endl;
+                            print_time(); cout << "Direct Hit" << threadID << endl;
                             print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Higher Range Half]" << endl;
                             print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
@@ -859,6 +879,8 @@ auto main() -> int {
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
                             if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                                print_time(); cout << "Subtraction Search ThreadID -> " << threadID << endl;
+                                print_time(); cout << "Offset -> " << offset.GetBase10() << endl;
                                 print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Higher Range Half]" << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
@@ -896,6 +918,8 @@ auto main() -> int {
                             privkey.Mult(mult);
                             privkey.AddOne(); // we got here the private key
 
+                            print_time(); cout << "Subtraction Search ThreadID -> " << threadID << endl;
+                            print_time(); cout << "Direct Hit" << threadID << endl;
                             print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Higher Range Half]" << endl;
                             print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
@@ -950,6 +974,8 @@ auto main() -> int {
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
                             if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                                print_time(); cout << "Subtraction Search ThreadID -> " << threadID << endl;
+                                print_time(); cout << "Offset -> " << offset.GetBase10() << endl;
                                 print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Higher Range Half]" << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
@@ -982,7 +1008,7 @@ auto main() -> int {
             }// while (true) loop end curly brace
         };// scalable_subtraction_search_save
         // scalable_subtraction_search
-        auto scalable_subtraction_search = [&](Point starting_Point, Int offset, Int stride_Sum) {
+        auto scalable_subtraction_search = [&](Point starting_Point, Int offset, Int stride_Sum, int threadID) {
 
             Int stride_sum; stride_sum.Set(&stride_Sum);
             string cpub;
@@ -1064,6 +1090,8 @@ auto main() -> int {
                             privkey.Add(&pre_calc_sum, &Int_temp);
                             privkey.Mult(mult); // we got here the private key
 
+                            print_time(); cout << "Subtraction Search ThreadID -> " << threadID << endl;
+                            print_time(); cout << "Direct Hit" << threadID << endl;
                             print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Higher Range Half]" << endl;
                             print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
@@ -1117,6 +1145,8 @@ auto main() -> int {
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
                             if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                                print_time(); cout << "Subtraction Search ThreadID -> " << threadID << endl;
+                                print_time(); cout << "Offset -> " << offset.GetBase10() << endl;
                                 print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Higher Range Half]" << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
@@ -1154,6 +1184,8 @@ auto main() -> int {
                             privkey.Mult(mult);
                             privkey.AddOne(); // we got here the private key
 
+                            print_time(); cout << "Subtraction Search ThreadID -> " << threadID << endl;
+                            print_time(); cout << "Direct Hit" << threadID << endl;
                             print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Higher Range Half]" << endl;
                             print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                             ofstream outFile;
@@ -1208,6 +1240,8 @@ auto main() -> int {
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
                             if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                                print_time(); cout << "Subtraction Search ThreadID -> " << threadID << endl;
+                                print_time(); cout << "Offset -> " << offset.GetBase10() << endl;
                                 print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Higher Range Half]" << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
@@ -1231,9 +1265,9 @@ auto main() -> int {
         
         std::thread subtraction_Threads[cpuCores];
         
-        subtraction_Threads[0] = std::thread(scalable_subtraction_search_save, starting_Points[0], offset_Nums[0], stride_sum);
+        subtraction_Threads[0] = std::thread(scalable_subtraction_search_save, starting_Points[0], offset_Nums[0], stride_sum, 0);
         for (int i = 1; i < cpuCores; i++) {
-            subtraction_Threads[i] = std::thread(scalable_subtraction_search, starting_Points[i], offset_Nums[i], stride_sum);
+            subtraction_Threads[i] = std::thread(scalable_subtraction_search, starting_Points[i], offset_Nums[i], stride_sum, i);
         }
 
         for (int i = 0; i < cpuCores; i++) {

@@ -2,7 +2,6 @@
 #include <string.h>
 #include <cstdint>
 #include <iostream>
-#include <gmp.h>
 
 Secp256K1::Secp256K1() {
 }
@@ -73,17 +72,12 @@ Point Secp256K1::PointMultiplication(Point &P, Int *scalar) {
 }
 
 Point Secp256K1::PointDivision(Point &P, Int *scalar) {
-  Point A;
+  Point D;
   Int mod_inv;
-  mpz_t N, d, s;
-  mpz_inits(N, d, s, NULL);
-  mpz_set_str(N, order.GetBase10().c_str(), 0);
-  mpz_set_str(s, scalar->GetBase10().c_str(), 0);
-  mpz_invert(d, s, N);
-  mod_inv.SetBase10(mpz_get_str(NULL, 10, d));
-  mpz_clears(N, d, s, NULL);
-  A = PointMultiplication(P, &mod_inv);
-  return A;
+  mod_inv.Set(scalar);
+  mod_inv.MultInvModN();
+  D = PointMultiplication(P, &mod_inv);
+  return D;
 }
 
 uint8_t Secp256K1::GetByte(std::string &str, int idx) {
