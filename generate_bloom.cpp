@@ -101,6 +101,9 @@ auto main() -> int {
     uint64_t bloom_size = n_elements * 4;
     uint64_t bloom_pos = bloom_size * 8;
     int iterations = 4;
+    
+    print_time(); cout << "Bloomfilter Size : " << bytesToSize(double(bloom_size), 2);
+    cout << " Total(2 blooms): " << bytesToSize(double(bloom_size * 2), 2) << endl;
 
     auto bloom_create1 = [&]() {
         

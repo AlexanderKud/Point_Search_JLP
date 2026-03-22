@@ -81,3 +81,19 @@ void load_bloom_filter(const char *filename, unsigned char *bloom, size_t size) 
     fread(bloom, 1, size, fp);
     fclose(fp);
 }
+
+std::string bytesToSize(double bytes, int precision) {
+    std::string sizes[] = {"Bytes", "KB", "MB", "GB", "TB"};
+    int posttxt = 0;
+    
+    if (bytes == 0) return "n/a";
+    
+    while (bytes >= 1024 && posttxt < 4) {
+        posttxt++;
+        bytes = bytes / 1024;
+    }
+    
+    // Simple version without rounding control
+    return std::to_string(bytes).substr(0, std::to_string(bytes).find(".") + precision + 1) 
+           + " " + sizes[posttxt];
+}

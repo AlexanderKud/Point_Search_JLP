@@ -15,5 +15,6 @@ void set_bit(unsigned char *bloom, size_t pos);
 int check_bit(unsigned char *bloom, size_t pos);
 void save_bloom_filter(const char *filename, unsigned char *bloom, size_t size);
 void load_bloom_filter(const char *filename, unsigned char *bloom, size_t size);
+std::string bytesToSize(double bytes, int precision);
 
 #endif
