@@ -18,8 +18,8 @@ point_search.cpp
 [18:59:05] Block Width: 2^31
 [18:59:05] Search Pub : 0217d9823862bf7a648e3d88f9685aec65be263b15a56424078ddce4ca006e012e
 [18:59:05] Settings written to file
-[18:59:05] Creating bloomfilter images
 [18:59:05] Bloomfilter Size : 8.00 GB Total(2 blooms): 16.00 GB
+[18:59:05] Creating bloomfilter images
 [19:06:10] Writing BloomFilter to bloom1.bf
 [19:06:11] Writing BloomFilter to bloom2.bf
 [19:08:12] Elapsed time: (0)hours (9)minutes (7)seconds
