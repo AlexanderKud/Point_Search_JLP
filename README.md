@@ -37,4 +37,35 @@ point_search.cpp
 [19:18:04] BloomFilter Hit bloom1.bf (Even Point) [Lower Range Half]
 [19:18:04] Private key: 44179411046104651556
 [19:18:04] Elapsed time: (0)hours (7)minutes (43)seconds
+
+Point_Search2_JLP
+[alexander@alexander-manjaro Point_Search2_JLP]$ ./bloom
+[13:33:26] P_table generated
+[13:33:26] Range Start: 69 bits
+[13:33:26] Range End  : 70 bits
+[13:33:26] Block Width: 2^32
+[13:33:26] Search Pub : 03e2929572e326c95ab0a6da7324d2410dd6328f27040a876fd880a399aab8da3a
+[13:33:26] Settings written to file
+[13:33:26] Bloomfilter Size : 16.00 GB
+[13:33:26] Creating bloomfilter image
+[13:46:37] Writing BloomFilter to bloom.bf
+[13:48:57] Elapsed time: (0)hours (15)minutes (31)seconds
+
+[alexander@alexander-manjaro Point_Search2_JLP]$ ./search
+[13:49:16] S_table generated
+[13:49:16] Range Start: 69 bits
+[13:49:16] Range End  : 70 bits
+[13:49:16] Block Width: 2^32
+[13:49:16] Search Pub : 03e2929572e326c95ab0a6da7324d2410dd6328f27040a876fd880a399aab8da3a
+[13:49:16] Loading Bloomfilter image
+[13:49:39] Search in progress...
+[13:53:31] Save Data written to stride_sum.txt
+[13:57:21] Save Data written to stride_sum.txt
+[14:01:10] Save Data written to stride_sum.txt
+[14:04:59] Save Data written to stride_sum.txt
+[14:08:55] Save Data written to stride_sum.txt
+[14:12:51] Save Data written to stride_sum.txt
+[14:13:54] Found by Thread -> 1
+[14:13:54] Private key: 700782406099173415617
+[14:13:54] Elapsed time: (0)hours (24)minutes (15)seconds
 </pre>
