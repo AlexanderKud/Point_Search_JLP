@@ -132,7 +132,7 @@ auto main(int argc, char* argv[]) -> int {
             shift_down_points[i] = SP;
         }
 
-        Point shift_down_points_mul[bits_down_size]; // shift_down_points * pow(2, bits_down) - 1)
+        Point shift_down_points_mul[bits_down_size]; // shift_down_points * pow(2, bits_down) / 1)
         for (int i = 0; i < bits_down_size; i++) {
             Point SPM = secp256k1->PointMultiplication(shift_down_points[i], &multiplier);
             shift_down_points_mul[i] = SPM;
@@ -304,7 +304,7 @@ auto main(int argc, char* argv[]) -> int {
 
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
-                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                            if (calc_point.x_equals(TargetP)) {
                                 print_time(); cout << "Found by Thread -> " << threadIdx << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
@@ -484,7 +484,7 @@ auto main(int argc, char* argv[]) -> int {
 
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
-                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                            if (calc_point.x_equals(TargetP)) {
                                 print_time(); cout << "Found by Thread -> " << threadIdx << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
