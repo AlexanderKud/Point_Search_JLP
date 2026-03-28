@@ -130,26 +130,7 @@ auto main() -> int {
         
         stride.SetInt64(stride_bits);
         stride_point = secp256k1->ScalarMultiplication(&stride);
-        /*
-        //start splitting the search according to the chosen number of cpu cores
-        Int offset_Step, int_Cores, vector_Num, r;
-        int_Cores.SetInt32(cpuCores);
-        offset_Step.Set(&S_table[range_start - 2]);
-        offset_Step.Div(&int_Cores, &r);
-        
-        vector_Num.SetInt32(0);
-        vector<Int> offset_Nums;
-        for (int i = 0; i < cpuCores; i++) {
-            offset_Nums.push_back(vector_Num);
-            vector_Num.Add(&offset_Step);
-        }
-        
-        vector<Point> offset_Points;
-        offset_Points.push_back(secp256k1->G);
-        for (int i = 1; i < cpuCores; i++) {
-            offset_Points.push_back(secp256k1->ScalarMultiplication(&offset_Nums[i]));
-        }
-        */
+     
         vector<Point> starting_Points;
         Point vector_Point(start_point);
         starting_Points.push_back(vector_Point);
@@ -697,26 +678,7 @@ auto main() -> int {
         
         stride.SetInt64(stride_bits);
         stride_point = secp256k1->ScalarMultiplication(&stride);
-        /*
-        //start splitting the search according to the chosen number of cpu cores
-        Int offset_Step, int_Cores, vector_Num, r;
-        int_Cores.SetInt32(cpuCores);
-        offset_Step.Set(&S_table[range_start - 2]);
-        offset_Step.Div(&int_Cores, &r);
-        
-        vector_Num.SetInt32(0);
-        vector<Int> offset_Nums;
-        for (int i = 0; i < cpuCores; i++) {
-            offset_Nums.push_back(vector_Num);
-            vector_Num.Add(&offset_Step);
-        }
-        
-        vector<Point> offset_Points;
-        offset_Points.push_back(secp256k1->G);
-        for (int i = 1; i < cpuCores; i++) {
-            offset_Points.push_back(secp256k1->ScalarMultiplication(&offset_Nums[i]));
-        }
-        */
+      
         vector<Point> starting_Points;
         Point vector_Point(start_point);
         starting_Points.push_back(vector_Point);
