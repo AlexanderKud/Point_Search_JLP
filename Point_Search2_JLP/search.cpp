@@ -132,7 +132,7 @@ auto main(int argc, char* argv[]) -> int {
             shift_down_points[i] = SP;
         }
 
-        Point shift_down_points_mul[bits_down_size]; // shift_down_points * pow(2, bits_down) / 1)
+        Point shift_down_points_mul[bits_down_size]; // shift_down_points * pow(2, bits_down) - 1)
         for (int i = 0; i < bits_down_size; i++) {
             Point SPM = secp256k1->PointMultiplication(shift_down_points[i], &multiplier);
             shift_down_points_mul[i] = SPM;
