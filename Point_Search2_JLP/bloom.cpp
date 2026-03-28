@@ -145,7 +145,6 @@ auto main() -> int {
 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points X coordinates into the bloomfilter
                     for(int a = 0; a < iterations; a++) {
-                        //set_bit(bloom, pointBatchX[i].bits64[a] % bloom_mod);
                         set_bit(bloom, pointBatchX[i].bits64[a] & (bloom_mod - 1));
                     }
                 }
