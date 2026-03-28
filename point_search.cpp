@@ -53,7 +53,7 @@ auto main() -> int {
     uint64_t stride_bits = pow(2, block_width);
 
     uint64_t bloom_size = stride_bits * 4;
-    uint64_t bloom_pos = bloom_size * 8;
+    uint64_t bloom_mod = bloom_size * 8;
     int iterations = 4;
     
     char * bloomfile1 = "bloom1.bf";
@@ -93,6 +93,25 @@ auto main() -> int {
         pow10_points_Neg[arr_index] = Pm;
         arr_index += 1;
     }
+
+    //start splitting the search according to the chosen number of cpu cores
+    Int offset_Step, int_Cores, vector_Num, r;
+    int_Cores.SetInt32(cpuCores);
+    offset_Step.Set(&S_table[range_start - 2]);
+    offset_Step.Div(&int_Cores, &r);
+        
+    vector_Num.SetInt32(0);
+    vector<Int> offset_Nums;
+    for (int i = 0; i < cpuCores; i++) {
+        offset_Nums.push_back(vector_Num);
+        vector_Num.Add(&offset_Step);
+    }
+        
+    vector<Point> offset_Points;
+    offset_Points.push_back(secp256k1->G);
+    for (int i = 1; i < cpuCores; i++) {
+        offset_Points.push_back(secp256k1->ScalarMultiplication(&offset_Nums[i]));
+    }
     
     auto chrono_start = std::chrono::high_resolution_clock::now();
     
@@ -111,7 +130,7 @@ auto main() -> int {
         
         stride.SetInt64(stride_bits);
         stride_point = secp256k1->ScalarMultiplication(&stride);
-        
+        /*
         //start splitting the search according to the chosen number of cpu cores
         Int offset_Step, int_Cores, vector_Num, r;
         int_Cores.SetInt32(cpuCores);
@@ -130,7 +149,7 @@ auto main() -> int {
         for (int i = 1; i < cpuCores; i++) {
             offset_Points.push_back(secp256k1->ScalarMultiplication(&offset_Nums[i]));
         }
-
+        */
         vector<Point> starting_Points;
         Point vector_Point(start_point);
         starting_Points.push_back(vector_Point);
@@ -210,7 +229,7 @@ auto main() -> int {
 
                     in_bloom = true;
                     for (int a = 0; a < iterations; a++) {
-                        if (!check_bit(bloom1, pointBatchX[i].bits64[a] % bloom_pos)) {
+                        if (!check_bit(bloom1, pointBatchX[i].bits64[a] & (bloom_mod - 1))) {
                             in_bloom = false;
                             break;
                         }
@@ -242,9 +261,9 @@ auto main() -> int {
                         }
 
                         CheckP = secp256k1->AddPoints(BloomP, Gm);
-                        in_bloom = true;
+
                         for (int a = 0; a < iterations; a++) {
-                            if (!check_bit(bloom1, CheckP.x.bits64[a] % bloom_pos)) {
+                            if (!check_bit(bloom1, CheckP.x.bits64[a] & (bloom_mod - 1))) {
                                 in_bloom = false;
                                 break;
                             }
@@ -261,7 +280,7 @@ auto main() -> int {
                                     count += 1;
                                     in_bloom = true;
                                     for (int c = 0; c < iterations; c++) {
-                                        if (!check_bit(bloom1, BloomP.x.bits64[c] % bloom_pos)) {
+                                        if (!check_bit(bloom1, BloomP.x.bits64[c] & (bloom_mod - 1))) {
                                             in_bloom = false;
                                             break;
                                         } 
@@ -298,7 +317,7 @@ auto main() -> int {
 
                     in_bloom = true;
                     for (int b = 0; b < iterations; b++) {
-                        if (!check_bit(bloom2, pointBatchX[i].bits64[b] % bloom_pos)) {
+                        if (!check_bit(bloom2, pointBatchX[i].bits64[b] & (bloom_mod - 1))) {
                             in_bloom = false;
                             break;
                         }
@@ -331,9 +350,9 @@ auto main() -> int {
                         }
 
                         CheckP = secp256k1->AddPoints(BloomP, Gm);
-                        in_bloom = true;
+
                         for (int a = 0; a < iterations; a++) {
-                            if (!check_bit(bloom2, CheckP.x.bits64[a] % bloom_pos)) {
+                            if (!check_bit(bloom2, CheckP.x.bits64[a] & (bloom_mod - 1))) {
                                 in_bloom = false;
                                 break;
                             }
@@ -350,7 +369,7 @@ auto main() -> int {
                                     count += 1;
                                     in_bloom = true;
                                     for (int c = 0; c < iterations; c++) {
-                                        if (!check_bit(bloom2, BloomP.x.bits64[c] % bloom_pos)) {
+                                        if (!check_bit(bloom2, BloomP.x.bits64[c] & (bloom_mod - 1))) {
                                             in_bloom = false;
                                             break;
                                         } 
@@ -466,7 +485,7 @@ auto main() -> int {
                     
                     in_bloom = true;
                     for (int a = 0; a < iterations; a++) {
-                        if (!check_bit(bloom1, pointBatchX[i].bits64[a] % bloom_pos)) {
+                        if (!check_bit(bloom1, pointBatchX[i].bits64[a] & (bloom_mod - 1))) {
                             in_bloom = false;
                             break;
                         }
@@ -498,9 +517,9 @@ auto main() -> int {
                         }
 
                         CheckP = secp256k1->AddPoints(BloomP, Gm);
-                        in_bloom = true;
+
                         for (int a = 0; a < iterations; a++) {
-                            if (!check_bit(bloom1, CheckP.x.bits64[a] % bloom_pos)) {
+                            if (!check_bit(bloom1, CheckP.x.bits64[a] & (bloom_mod - 1))) {
                                 in_bloom = false;
                                 break;
                             }
@@ -517,7 +536,7 @@ auto main() -> int {
                                     count += 1;
                                     in_bloom = true;
                                     for (int c = 0; c < iterations; c++) {
-                                        if (!check_bit(bloom1, BloomP.x.bits64[c] % bloom_pos)) {
+                                        if (!check_bit(bloom1, BloomP.x.bits64[c] & (bloom_mod - 1))) {
                                             in_bloom = false;
                                             break;
                                         } 
@@ -554,7 +573,7 @@ auto main() -> int {
 
                     in_bloom = true;
                     for (int b = 0; b < iterations; b++) {
-                        if (!check_bit(bloom2, pointBatchX[i].bits64[b] % bloom_pos)) {
+                        if (!check_bit(bloom2, pointBatchX[i].bits64[b] & (bloom_mod - 1))) {
                             in_bloom = false;
                             break;
                         }
@@ -587,9 +606,9 @@ auto main() -> int {
                         }
 
                         CheckP = secp256k1->AddPoints(BloomP, Gm);
-                        in_bloom = true;
+
                         for (int a = 0; a < iterations; a++) {
-                            if (!check_bit(bloom2, CheckP.x.bits64[a] % bloom_pos)) {
+                            if (!check_bit(bloom2, CheckP.x.bits64[a] & (bloom_mod - 1))) {
                                 in_bloom = false;
                                 break;
                             }
@@ -606,7 +625,7 @@ auto main() -> int {
                                     count += 1;
                                     in_bloom = true;
                                     for (int c = 0; c < iterations; c++) {
-                                        if (!check_bit(bloom2, BloomP.x.bits64[c] % bloom_pos)) {
+                                        if (!check_bit(bloom2, BloomP.x.bits64[c] & (bloom_mod - 1))) {
                                             in_bloom = false;
                                             break;
                                         } 
@@ -678,7 +697,7 @@ auto main() -> int {
         
         stride.SetInt64(stride_bits);
         stride_point = secp256k1->ScalarMultiplication(&stride);
-        
+        /*
         //start splitting the search according to the chosen number of cpu cores
         Int offset_Step, int_Cores, vector_Num, r;
         int_Cores.SetInt32(cpuCores);
@@ -697,7 +716,7 @@ auto main() -> int {
         for (int i = 1; i < cpuCores; i++) {
             offset_Points.push_back(secp256k1->ScalarMultiplication(&offset_Nums[i]));
         }
-
+        */
         vector<Point> starting_Points;
         Point vector_Point(start_point);
         starting_Points.push_back(vector_Point);
@@ -780,7 +799,7 @@ auto main() -> int {
                     
                     in_bloom = true;
                     for (int a = 0; a < iterations; a++) {
-                        if (!check_bit(bloom1, pointBatchX[i].bits64[a] % bloom_pos)) {
+                        if (!check_bit(bloom1, pointBatchX[i].bits64[a] & (bloom_mod - 1))) {
                             in_bloom = false;
                             break;
                         }
@@ -812,9 +831,9 @@ auto main() -> int {
                         }
 
                         CheckP = secp256k1->AddPoints(BloomP, Gm);
-                        in_bloom = true;
+
                         for (int a = 0; a < iterations; a++) {
-                            if (!check_bit(bloom1, CheckP.x.bits64[a] % bloom_pos)) {
+                            if (!check_bit(bloom1, CheckP.x.bits64[a] & (bloom_mod - 1))) {
                                 in_bloom = false;
                                 break;
                             }
@@ -831,7 +850,7 @@ auto main() -> int {
                                     count += 1;
                                     in_bloom = true;
                                     for (int c = 0; c < iterations; c++) {
-                                        if (!check_bit(bloom1, BloomP.x.bits64[c] % bloom_pos)) {
+                                        if (!check_bit(bloom1, BloomP.x.bits64[c] & (bloom_mod - 1))) {
                                             in_bloom = false;
                                             break;
                                         } 
@@ -868,7 +887,7 @@ auto main() -> int {
 
                     in_bloom = true;
                     for (int b = 0; b < iterations; b++) {
-                        if (!check_bit(bloom2, pointBatchX[i].bits64[b] % bloom_pos)) {
+                        if (!check_bit(bloom2, pointBatchX[i].bits64[b] & (bloom_mod - 1))) {
                             in_bloom = false;
                             break;
                         }
@@ -901,9 +920,9 @@ auto main() -> int {
                         }
 
                         CheckP = secp256k1->AddPoints(BloomP, Gm);
-                        in_bloom = true;
+
                         for (int a = 0; a < iterations; a++) {
-                            if (!check_bit(bloom2, CheckP.x.bits64[a] % bloom_pos)) {
+                            if (!check_bit(bloom2, CheckP.x.bits64[a] & (bloom_mod - 1))) {
                                 in_bloom = false;
                                 break;
                             }
@@ -920,7 +939,7 @@ auto main() -> int {
                                     count += 1;
                                     in_bloom = true;
                                     for (int c = 0; c < iterations; c++) {
-                                        if (!check_bit(bloom2, BloomP.x.bits64[c] % bloom_pos)) {
+                                        if (!check_bit(bloom2, BloomP.x.bits64[c] & (bloom_mod - 1))) {
                                             in_bloom = false;
                                             break;
                                         } 
@@ -1036,7 +1055,7 @@ auto main() -> int {
 
                     in_bloom = true;
                     for (int a = 0; a < iterations; a++) {
-                        if (!check_bit(bloom1, pointBatchX[i].bits64[a] % bloom_pos)) {
+                        if (!check_bit(bloom1, pointBatchX[i].bits64[a] & (bloom_mod - 1))) {
                             in_bloom = false;
                             break;
                         }
@@ -1068,9 +1087,9 @@ auto main() -> int {
                         }
 
                         CheckP = secp256k1->AddPoints(BloomP, Gm);
-                        in_bloom = true;
+
                         for (int a = 0; a < iterations; a++) {
-                            if (!check_bit(bloom1, CheckP.x.bits64[a] % bloom_pos)) {
+                            if (!check_bit(bloom1, CheckP.x.bits64[a] & (bloom_mod - 1))) {
                                 in_bloom = false;
                                 break;
                             }
@@ -1087,7 +1106,7 @@ auto main() -> int {
                                     count += 1;
                                     in_bloom = true;
                                     for (int c = 0; c < iterations; c++) {
-                                        if (!check_bit(bloom1, BloomP.x.bits64[c] % bloom_pos)) {
+                                        if (!check_bit(bloom1, BloomP.x.bits64[c] & (bloom_mod - 1))) {
                                             in_bloom = false;
                                             break;
                                         } 
@@ -1124,7 +1143,7 @@ auto main() -> int {
 
                     in_bloom = true;
                     for (int b = 0; b < iterations; b++) {
-                        if (!check_bit(bloom2, pointBatchX[i].bits64[b] % bloom_pos)) {
+                        if (!check_bit(bloom2, pointBatchX[i].bits64[b] & (bloom_mod - 1))) {
                             in_bloom = false;
                             break;
                         }
@@ -1157,9 +1176,9 @@ auto main() -> int {
                         }
 
                         CheckP = secp256k1->AddPoints(BloomP, Gm);
-                        in_bloom = true;
+
                         for (int a = 0; a < iterations; a++) {
-                            if (!check_bit(bloom2, CheckP.x.bits64[a] % bloom_pos)) {
+                            if (!check_bit(bloom2, CheckP.x.bits64[a] & (bloom_mod - 1))) {
                                 in_bloom = false;
                                 break;
                             }
@@ -1176,7 +1195,7 @@ auto main() -> int {
                                     count += 1;
                                     in_bloom = true;
                                     for (int c = 0; c < iterations; c++) {
-                                        if (!check_bit(bloom2, BloomP.x.bits64[c] % bloom_pos)) {
+                                        if (!check_bit(bloom2, BloomP.x.bits64[c] & (bloom_mod - 1))) {
                                             in_bloom = false;
                                             break;
                                         } 

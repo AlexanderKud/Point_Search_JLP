@@ -99,7 +99,7 @@ auto main() -> int {
     int nbBatch = keysPerThread / POINTS_BATCH_SIZE; // number of batches for the single thread
 
     uint64_t bloom_size = n_elements * 4;
-    uint64_t bloom_pos = bloom_size * 8;
+    uint64_t bloom_mod = bloom_size * 8;
     int iterations = 4;
     
     print_time(); cout << "Bloomfilter Size : " << bytesToSize(double(bloom_size), 2);
@@ -166,7 +166,7 @@ auto main() -> int {
 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points X coordinates into the bloomfilter
                     for(int a = 0; a < iterations; a++) {
-                        set_bit(bloom, pointBatchX[i].bits64[a] % bloom_pos);
+                        set_bit(bloom, pointBatchX[i].bits64[a] & (bloom_mod - 1));
                     }
                 }
 
@@ -249,7 +249,7 @@ auto main() -> int {
 
                 for (int i = 0; i < POINTS_BATCH_SIZE; i++) { // inserting all batch points X coordinates into the bloomfilter
                     for(int a = 0; a < iterations; a++) {
-                        set_bit(bloom, pointBatchX[i].bits64[a] % bloom_pos);
+                        set_bit(bloom, pointBatchX[i].bits64[a] & (bloom_mod - 1));
                     }
                 }
 
