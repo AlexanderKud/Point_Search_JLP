@@ -154,12 +154,11 @@ auto main(int argc, char* argv[]) -> int {
             batch_Add = secp256k1->AddPoints(batch_Add, stride_point);
             addPoints[i] = batch_Add;
         }
-        // scalable_addition_search_save
+        // scalable_shift_down_search_save
         auto scalable_shift_down_search_save = [&](Point starting_Point, Point shift_P, Int stride_Sum, int threadIdx) {
 
             Int stride_sum; stride_sum.Set(&stride_Sum);
             Int Int_steps, Int_temp, privkey;
-            string cpub;
             int index, count;
             uint64_t steps;
             vector<uint64_t> privkey_num;
@@ -325,7 +324,6 @@ auto main(int argc, char* argv[]) -> int {
                 save_counter += 1;
                 
                 if (save_counter % 600000 == 0) {
-                    cpub = secp256k1->GetPublicKeyHex(startPoint);
                     ofstream outFile;
                     outFile.open("stride_sum.txt");
                     outFile << stride_sum.GetBase10() << '\n';
@@ -340,7 +338,6 @@ auto main(int argc, char* argv[]) -> int {
 
             Int stride_sum; stride_sum.Set(&stride_Sum);
             Int Int_steps, Int_temp, privkey;
-            string cpub;
             int index, count;
             uint64_t steps;
             vector<uint64_t> privkey_num;
