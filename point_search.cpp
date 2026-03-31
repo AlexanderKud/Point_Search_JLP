@@ -31,7 +31,7 @@ auto main() -> int {
     Int pk; pk.SetInt32(1); // generating power of two values table (2^0..2^range_start)
     uint64_t mult = 2;
     vector<Int> S_table;
-    for (int i = 0; i < int(range_start); i++)
+    for (int i = 0; i < 256; i++)
     {
         S_table.push_back(pk);
         pk.Mult(mult);
