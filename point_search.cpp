@@ -18,16 +18,6 @@ auto main() -> int {
 
     Int gm; gm.SetBase16("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140");
     Point Gm = secp256k1->ScalarMultiplication(&gm);
-    
-    Int pk; pk.SetInt32(1); // generating power of two values (2^0..2^256) table
-    uint64_t mult = 2;
-    vector<Int> S_table;
-    for (int i = 0; i < 256; i++)
-    {
-        S_table.push_back(pk);
-        pk.Mult(mult);
-    }
-    print_time(); cout << "S_table generated" << endl;
 
     uint64_t range_start, range_end, block_width; // block_width = number of elements in the bloomfilter and a stride size to walk the range
     string temp, search_pub;
@@ -37,6 +27,16 @@ auto main() -> int {
     getline(inFile, temp); block_width = std::stoull(temp);
     getline(inFile, temp); search_pub = trim(temp);
     inFile.close();
+
+    Int pk; pk.SetInt32(1); // generating power of two values table (2^0..2^range_start)
+    uint64_t mult = 2;
+    vector<Int> S_table;
+    for (int i = 0; i < int(range_start); i++)
+    {
+        S_table.push_back(pk);
+        pk.Mult(mult);
+    }
+    print_time(); cout << "S_table generated" << endl;
 
     Point TargetP1 = secp256k1->ParsePublicKeyHex(search_pub);
     Int d_05; d_05.SetBase10("57896044618658097711785492504343953926418782139537452191302581570759080747169");

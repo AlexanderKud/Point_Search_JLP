@@ -21,18 +21,6 @@ auto main() -> int {
     auto chrono_start = std::chrono::high_resolution_clock::now();    // starting the timer
     Secp256K1* secp256k1 = new Secp256K1(); secp256k1->Init(); // initializing secp256k1 context
     
-    Int pk; pk.SetInt32(1); // generating power of two points table (2^0..2^256) 
-    uint64_t mult = 2;
-    vector<Point> P_table;
-    Point P;
-    for (int i = 0; i < 256; i++)
-    {
-        P = secp256k1->ScalarMultiplication(&pk);
-        P_table.push_back(P);
-        pk.Mult(mult);
-    }
-    print_time(); cout << "P_table generated" << endl;
-
     uint64_t range_start, range_end, block_width; // block_width = number of elements in the bloomfilter and a stride size to walk the range
     string temp, search_pub;
     ifstream inFile("settings.txt");
@@ -41,6 +29,18 @@ auto main() -> int {
     getline(inFile, temp); block_width = std::stoull(temp);
     getline(inFile, temp); search_pub = trim(temp);
     inFile.close();
+
+    Int pk; pk.SetInt32(1); // generating power of two points table (2^0..2^range_start) 
+    uint64_t mult = 2;
+    vector<Point> P_table;
+    Point P;
+    for (int i = 0; i < int(range_start); i++)
+    {
+        P = secp256k1->ScalarMultiplication(&pk);
+        P_table.push_back(P);
+        pk.Mult(mult);
+    }
+    print_time(); cout << "P_table generated" << endl;
     
     print_time(); cout << "Range Start: " << range_start << " bits" << endl;
     print_time(); cout << "Range End  : " << range_end << " bits" << endl;
