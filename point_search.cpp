@@ -112,6 +112,10 @@ auto main() -> int {
     for (int i = 1; i < cpuCores; i++) {
         offset_Points.push_back(secp256k1->ScalarMultiplication(&offset_Nums[i]));
     }
+
+    Int stride; 
+    stride.SetInt64(stride_bits);
+    Point stride_point = secp256k1->ScalarMultiplication(&stride);
     
     auto chrono_start = std::chrono::high_resolution_clock::now();
     
@@ -119,17 +123,14 @@ auto main() -> int {
                                    // the closer the target point to the center of the range from either side
         int save_counter = 0;      // the faster collision will happen
         string temp;
-        Point start_point, stride_point, calc_point;
-        Int stride_sum, stride;
+        Point start_point, calc_point;
+        Int stride_sum;
         ifstream inFile("settings1.txt");
         getline(inFile, temp);
         start_point = secp256k1->ParsePublicKeyHex(trim(temp));
         getline(inFile, temp);
         stride_sum.SetBase10(trim(temp).data());
         inFile.close();
-        
-        stride.SetInt64(stride_bits);
-        stride_point = secp256k1->ScalarMultiplication(&stride);
      
         vector<Point> starting_Points;
         Point vector_Point(start_point);
@@ -667,17 +668,14 @@ auto main() -> int {
                                       // the closer the target point to the center of the range from either side
         int save_counter = 0;         // the faster collision will happen
         string temp;
-        Point start_point, stride_point, calc_point;
-        Int stride_sum, stride;
+        Point start_point, calc_point;
+        Int stride_sum;
         ifstream inFile("settings2.txt");
         getline(inFile, temp);
         start_point = secp256k1->ParsePublicKeyHex(trim(temp));
         getline(inFile, temp);
         stride_sum.SetBase10(trim(temp).data());
         inFile.close();
-        
-        stride.SetInt64(stride_bits);
-        stride_point = secp256k1->ScalarMultiplication(&stride);
       
         vector<Point> starting_Points;
         Point vector_Point(start_point);
