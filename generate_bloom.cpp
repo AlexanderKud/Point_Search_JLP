@@ -34,7 +34,7 @@ auto main() -> int {
     uint64_t mult = 2;
     vector<Point> P_table;
     Point P;
-    for (int i = 0; i < int(range_start); i++)
+    for (int i = 0; i < 256; i++)
     {
         P = secp256k1->ScalarMultiplication(&pk);
         P_table.push_back(P);
