@@ -155,7 +155,6 @@ auto main() -> int {
 
             Int stride_sum; stride_sum.Set(&stride_Sum);
             Int Int_steps, Int_temp, privkey;
-            string cpub;
             int index, count;
             uint64_t steps;
             vector<uint64_t> privkey_num;
@@ -284,7 +283,8 @@ auto main() -> int {
                             privkey.Mult(mult); // we got here the private key
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
-                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                            //if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                            if (calc_point.x_equals(TargetP1)) {
                                 print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
@@ -374,7 +374,7 @@ auto main() -> int {
                             privkey.AddOne(); // we got here the private key
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
-                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                            if (calc_point.x_equals(TargetP1)) {
                                 print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Lower Range Half]" << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
@@ -395,10 +395,9 @@ auto main() -> int {
                 save_counter += 1;
                 
                 if (save_counter % 300000 == 0) {
-                    cpub = secp256k1->GetPublicKeyHex(startPoint);
                     ofstream outFile;
                     outFile.open("settings1.txt");
-                    outFile << cpub <<'\n';
+                    outFile << secp256k1->GetPublicKeyHex(startPoint) <<'\n';
                     outFile << stride_sum.GetBase10() << '\n';
                     outFile.close();
                     save_counter = 0;
@@ -411,7 +410,6 @@ auto main() -> int {
 
             Int stride_sum; stride_sum.Set(&stride_Sum);
             Int Int_steps, Int_temp, privkey;
-            string cpub;
             int index, count;
             uint64_t steps;
             vector<uint64_t> privkey_num;
@@ -540,7 +538,7 @@ auto main() -> int {
                             privkey.Mult(mult); // we got here the private key
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
-                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                            if (calc_point.x_equals(TargetP1)) {
                                 print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Lower Range Half]" << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
@@ -630,7 +628,7 @@ auto main() -> int {
                             privkey.AddOne(); // we got here the private key
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
-                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                            if (calc_point.x_equals(TargetP1)) {
                                 print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Lower Range Half]" << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
@@ -702,7 +700,6 @@ auto main() -> int {
         auto scalable_subtraction_search_save = [&](Point starting_Point, Int offset, Int stride_Sum) {
 
             Int stride_sum; stride_sum.Set(&stride_Sum);
-            string cpub;
             int index, count;
             uint64_t steps;
             vector<uint64_t> privkey_num;
@@ -832,7 +829,7 @@ auto main() -> int {
                             privkey.Mult(mult); // we got here the private key
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
-                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                            if (calc_point.x_equals(TargetP1)) {
                                 print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Higher Range Half]" << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
@@ -922,7 +919,7 @@ auto main() -> int {
                             privkey.AddOne(); // we got here the private key
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
-                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                            if (calc_point.x_equals(TargetP1)) {
                                 print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Higher Range Half]" << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
@@ -943,10 +940,9 @@ auto main() -> int {
                 save_counter += 1; // all values are derived from this data after new program start
                 
                 if (save_counter % 300000 == 0) {
-                    cpub = secp256k1->GetPublicKeyHex(startPoint);
                     ofstream outFile;
                     outFile.open("settings2.txt");
-                    outFile << cpub <<'\n';
+                    outFile << secp256k1->GetPublicKeyHex(startPoint) <<'\n';
                     outFile << stride_sum.GetBase10() << '\n';
                     outFile.close();
                     save_counter = 0;
@@ -958,7 +954,6 @@ auto main() -> int {
         auto scalable_subtraction_search = [&](Point starting_Point, Int offset, Int stride_Sum) {
 
             Int stride_sum; stride_sum.Set(&stride_Sum);
-            string cpub;
             int index, count;
             uint64_t steps;
             vector<uint64_t> privkey_num;
@@ -1088,7 +1083,7 @@ auto main() -> int {
                             privkey.Mult(mult); // we got here the private key
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
-                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                            if (calc_point.x_equals(TargetP1)) {
                                 print_time(); cout << "BloomFilter Hit " << bloomfile1 << " (Even Point) [Higher Range Half]" << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
@@ -1178,7 +1173,7 @@ auto main() -> int {
                             privkey.AddOne(); // we got here the private key
                             calc_point = secp256k1->ScalarMultiplication(&privkey);
                             
-                            if (secp256k1->GetPublicKeyHex(calc_point) == search_pub) { // if cpubs are equal we got it
+                            if (calc_point.x_equals(TargetP1)) {
                                 print_time(); cout << "BloomFilter Hit " << bloomfile2 << " (Odd Point) [Higher Range Half]" << endl;
                                 print_time(); cout << "Private key: " << privkey.GetBase10() << endl;
                                 ofstream outFile;
