@@ -6,6 +6,9 @@ if platform.system() == 'Linux':
 elif platform.system() == 'Windows':
     secp256k1 = ctypes.CDLL("./secp256k1_lib.dll")
 
+secp256k1.Init.argtypes = [ctypes.c_int]
+secp256k1.Init.restype = None
+
 secp256k1.check.argtypes = None
 secp256k1.check.restype = None
 
@@ -111,8 +114,9 @@ lambda2 = 0xac9c52b33fa3cf1f5ad9e3fd77ed9ba4a880b9fc8ec739c2e0cfc810b51283ce
 P       = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f
 beta1   = 0x7ae96a2b657c07106e64479eac3434e99cf0497512f58995c1396c28719501ee
 beta2   = 0x851695d49a83f8ef919bb86153cbcb16630fb68aed0a766a3ec693d68e6afa40
-    
-secp256k1.Init()
+
+# 2 -> number of bloomfilters to initialize
+secp256k1.Init(2) 
 
 def check():
     secp256k1.check()

@@ -1,7 +1,6 @@
 import random
 import secp256k1
 
-N = 115792089237316195423570985008687907852837564279074904382605163141518161494337
 a_power = 53
 b_power = 54
 block_width = (a_power // 2) if (a_power // 2) < 32 else 32
