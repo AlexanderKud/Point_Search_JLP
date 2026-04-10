@@ -15,7 +15,8 @@ const int POINTS_BATCH_SIZE = 1024; // Batch addition with batch inversion using
 
 auto main(int argc, char* argv[]) -> int {
 
-    Secp256K1* secp256k1 = new Secp256K1(); secp256k1->Init(); // initialize secp256k1 context
+    Secp256K1* secp256k1 = new Secp256K1();
+    secp256k1->Init(); // initialize secp256k1 context
 
     Int gm; gm.SetBase16("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140");
     Point Gm = secp256k1->ScalarMultiplication(&gm);
