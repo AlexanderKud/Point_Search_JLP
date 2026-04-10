@@ -19,7 +19,8 @@ std::mutex lock2;
 auto main() -> int {
     
     auto chrono_start = std::chrono::high_resolution_clock::now();    // starting the timer
-    Secp256K1* secp256k1 = new Secp256K1(); secp256k1->Init(); // initializing secp256k1 context
+    Secp256K1* secp256k1 = new Secp256K1();
+    secp256k1->Init(); // initializing secp256k1 context
     
     uint64_t range_start, range_end, block_width; // block_width = number of elements in the bloomfilter and a stride size to walk the range
     string temp, search_pub;
