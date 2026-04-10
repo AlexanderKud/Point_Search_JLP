@@ -18,7 +18,8 @@ std::mutex mtx_lock;
 auto main() -> int {
     
     auto chrono_start = std::chrono::high_resolution_clock::now();    // starting the timer
-    Secp256K1* secp256k1 = new Secp256K1(); secp256k1->Init(); // initializing secp256k1 context
+    Secp256K1* secp256k1 = new Secp256K1();
+    secp256k1->Init(); // initializing secp256k1 context
     
     Int pk; pk.SetInt32(1); // generating power of two points table (2^0..2^256) 
     uint64_t mult = 2;
