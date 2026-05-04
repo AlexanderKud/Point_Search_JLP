@@ -97,7 +97,6 @@ auto main() -> int {
         step.Set(&range_start_Int);
         step.Div(&divide, &rem); // step = range_start / cpuCores
 
-
         std::pair<Int , Int> range_nums[cpuCores]; // whole range divided into pairs (range start + step)
 
         for (int i = 0; i < cpuCores; i++) {
@@ -256,8 +255,6 @@ auto main() -> int {
                     }
                     
                 }
-
-
 
                 between.Sub(&max_value, &min_value);
 
@@ -475,8 +472,6 @@ auto main() -> int {
                     
                 }
 
-
-
                 between.Sub(&max_value, &min_value);
 
                 walker.Set(&min_value);
@@ -549,7 +544,6 @@ auto main() -> int {
                 max_value.Sub(&stride);
                 min_point = secp256k1->AddPoints(min_point, stride_point);
                 max_point = secp256k1->SubtractPoints(max_point, stride_point);
-
 
             }
         };
